@@ -1,4 +1,4 @@
-import { test, expect } from '@playwright/test'
+import { test, expect } from '../support/test'
 
 test('app routes render and navigation works without runtime errors', async ({ page }) => {
   const errors: string[] = []

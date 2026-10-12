@@ -1,4 +1,4 @@
-import { useState, type KeyboardEvent } from 'react'
+import { type KeyboardEvent } from 'react'
 import {
   addDays,
   addMonths,
@@ -21,14 +21,17 @@ interface MonthCalendarProps {
   onSelect: (date: Date) => void
   expanded?: boolean
   activityDates: Readonly<Record<string, string>>
+  month: Date
+  onMonthChange: (date: Date) => void
 }
 export function MonthCalendar({
   selected,
   onSelect,
   expanded = false,
   activityDates,
+  month,
+  onMonthChange,
 }: MonthCalendarProps) {
-  const [month, setMonth] = useState(startOfMonth(selected))
   const days = eachDayOfInterval({
     start: startOfWeek(startOfMonth(month), { weekStartsOn: 1 }),
     end: endOfWeek(endOfMonth(month), { weekStartsOn: 1 }),
@@ -46,7 +49,7 @@ export function MonthCalendar({
     if (amount === undefined) return
     event.preventDefault()
     const next = addDays(day, amount)
-    setMonth(startOfMonth(next))
+    onMonthChange(startOfMonth(next))
     onSelect(next)
     requestAnimationFrame(() =>
       document.getElementById(`day-${expanded ? 'large' : 'small'}-${toDateKey(next)}`)?.focus(),
@@ -62,7 +65,7 @@ export function MonthCalendar({
             variant="ghost"
             className="icon-button"
             aria-label="Previous month"
-            onClick={() => setMonth(addMonths(month, -1))}
+            onClick={() => onMonthChange(addMonths(month, -1))}
           >
             <ChevronLeft size={16} />
           </Button>
@@ -70,7 +73,7 @@ export function MonthCalendar({
             variant="ghost"
             className="icon-button"
             aria-label="Next month"
-            onClick={() => setMonth(addMonths(month, 1))}
+            onClick={() => onMonthChange(addMonths(month, 1))}
           >
             <ChevronRight size={16} />
           </Button>
@@ -91,7 +94,7 @@ export function MonthCalendar({
               id={`day-${expanded ? 'large' : 'small'}-${key}`}
               type="button"
               className={`calendar-day ${isSameMonth(day, month) ? '' : 'outside'} ${isSameDay(day, selected) ? 'selected' : ''} ${isToday(day) ? 'is-today' : ''}`}
-              aria-label={`${format(day, 'EEEE, MMMM d, yyyy')}${hasActivities ? ', sample activities' : ''}`}
+              aria-label={`${format(day, 'EEEE, MMMM d, yyyy')}${hasActivities ? ', activities' : ''}`}
               aria-pressed={isSameDay(day, selected)}
               onClick={() => onSelect(day)}
               onKeyDown={(event) => selectWithKeyboard(event, day)}
@@ -104,7 +107,9 @@ export function MonthCalendar({
                   <i />
                 </span>
               )}
-              {expanded && hasActivities && <span className="day-total">{activityDates[key]}</span>}
+              {expanded && hasActivities && (
+                <span className="day-total">{activityDates[key]} logged</span>
+              )}
             </button>
           )
         })}
@@ -112,7 +117,7 @@ export function MonthCalendar({
       {expanded && (
         <div className="calendar-legend">
           <span>
-            <i /> Sample activity
+            <i /> Activity logged
           </span>
           <span>Use arrow keys to move between days</span>
         </div>

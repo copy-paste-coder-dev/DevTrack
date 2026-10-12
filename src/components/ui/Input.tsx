@@ -43,8 +43,8 @@ export function Input({ label, error, hint, id, className = '', required, ...pro
     </div>
   )
 }
-type SelectProps = SelectHTMLAttributes<HTMLSelectElement> & { label: string }
-export function Select({ label, id, className = '', required, ...props }: SelectProps) {
+type SelectProps = SelectHTMLAttributes<HTMLSelectElement> & { label: string; error?: string }
+export function Select({ label, id, className = '', required, error, ...props }: SelectProps) {
   const generatedId = useId()
   const selectId = id ?? generatedId
   return (
@@ -58,7 +58,18 @@ export function Select({ label, id, className = '', required, ...props }: Select
           </span>
         )}
       </label>
-      <select id={selectId} required={required} {...props} />
+      <select
+        id={selectId}
+        required={required}
+        aria-invalid={Boolean(error)}
+        aria-describedby={error ? `${selectId}-error` : undefined}
+        {...props}
+      />
+      {error && (
+        <span id={`${selectId}-error`} className="field-error">
+          {error}
+        </span>
+      )}
     </div>
   )
 }

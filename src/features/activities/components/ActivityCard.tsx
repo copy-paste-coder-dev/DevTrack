@@ -5,6 +5,7 @@ import { ActivityTypeBadge, ActivityTypeIcon } from './ActivityTypeIcon'
 import { activityMeta } from '../config/presentation'
 import type { Activity } from '../types/activity'
 import { formatDuration } from '../../../utils/duration'
+import { formatDisplayTime } from '../../../utils/date'
 
 export interface ActivityCardProps {
   activity: Activity
@@ -12,19 +13,20 @@ export interface ActivityCardProps {
   onDelete: (activity: Activity) => void
 }
 export function ActivityCard({ activity, onEdit, onDelete }: ActivityCardProps) {
-  const meta = activityMeta[activity.type]
+  const meta = activityMeta[activity.activityType]
   return (
     <div className={`activity-block tone-${meta.color}`}>
-      <ActivityTypeIcon type={activity.type} />
+      <ActivityTypeIcon type={activity.activityType} />
       <div className="activity-content">
         <div className="activity-title">
-          <ActivityTypeBadge type={activity.type} />
+          <ActivityTypeBadge type={activity.activityType} />
           <StatusBadge status={activity.status} />
         </div>
-        <p>{activity.name}</p>
+        <p>{activity.taskName}</p>
         <div className="activity-time">
           <span>
-            {activity.start} <span className="time-dash">—</span> {activity.end}
+            {formatDisplayTime(activity.startAt)} <span className="time-dash">—</span>{' '}
+            {formatDisplayTime(activity.endAt)}
           </span>
           <span className="duration-chip">{formatDuration(activity.durationMinutes)}</span>
         </div>

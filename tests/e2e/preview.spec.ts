@@ -1,4 +1,4 @@
-import { test, expect } from '@playwright/test'
+import { test, expect } from '../support/test'
 
 let browserIssues: string[] = []
 test.beforeEach(async ({ page }) => {
@@ -17,9 +17,7 @@ test.afterEach(() => {
   expect(browserIssues).toEqual([])
 })
 
-test('activity preview validates fields, preserves sample data and restores focus', async ({
-  page,
-}) => {
+test('activity form validates fields, saves and restores focus', async ({ page }) => {
   await page.goto('/app')
   const add = page.getByRole('button', { name: 'Add activity', exact: true })
   await add.click()
@@ -34,10 +32,10 @@ test('activity preview validates fields, preserves sample data and restores focu
   await page.getByLabel(/^End time/).fill('10:00')
   await page.getByRole('button', { name: 'Save activity' }).click()
   await expect(dialog).not.toBeVisible()
-  await expect(page.getByText('Activity preview validated')).toBeVisible()
+  await expect(page.getByText('Activity logged.')).toBeVisible()
   await expect(
     page.getByRole('list', { name: 'Daily activities' }).locator('.timeline-item'),
-  ).toHaveCount(6)
+  ).toHaveCount(7)
   await expect(add).toBeFocused()
   await add.click()
   await page.keyboard.press('Escape')
@@ -45,7 +43,7 @@ test('activity preview validates fields, preserves sample data and restores focu
   await expect(add).toBeFocused()
 })
 
-test('editing and deleting are explicit previews with no data mutation', async ({ page }) => {
+test('editing and deleting update activity data and retain dialog focus', async ({ page }) => {
   await page.goto('/app')
   await page.getByRole('button', { name: 'Edit Development', exact: true }).click()
   await expect(page.getByLabel('Task / activity name')).toHaveValue('Build the dashboard interface')
@@ -55,9 +53,9 @@ test('editing and deleting are explicit previews with no data mutation', async (
   await page.getByRole('button', { name: 'Delete Development', exact: true }).click()
   await expect(page.getByRole('heading', { name: 'Delete activity?' })).toBeVisible()
   await page.getByRole('button', { name: 'Delete', exact: true }).click()
-  await expect(page.getByText('Delete preview complete')).toBeVisible()
-  await expect(page.getByText('Build the dashboard interface', { exact: true })).toBeVisible()
-  const edit = page.getByRole('button', { name: 'Edit Development', exact: true })
+  await expect(page.getByText('Activity deleted.')).toBeVisible()
+  await expect(page.getByText('Build the dashboard interface', { exact: true })).toHaveCount(0)
+  const edit = page.getByRole('button', { name: 'Edit Jira Task', exact: true })
   await edit.click()
   await page.getByRole('button', { name: 'Delete', exact: true }).click()
   await expect(page.getByRole('heading', { name: 'Delete activity?' })).toBeVisible()
@@ -71,13 +69,13 @@ test('calendar selects empty days, supports keyboard movement and resets its vis
 }) => {
   await page.goto('/app/calendar')
   await page.getByRole('button', { name: 'Wednesday, October 14, 2026', exact: true }).click()
-  await expect(page.getByText('No activities for this date.')).toBeVisible()
+  await expect(page.getByText('No activities logged for this day.')).toBeVisible()
   await expect(page).toHaveURL(/date=2026-10-14/)
   const day = page.getByRole('button', { name: 'Wednesday, October 14, 2026', exact: true })
   await day.focus()
   await page.keyboard.press('ArrowLeft')
   await expect(
-    page.getByRole('button', { name: 'Tuesday, October 13, 2026, sample activities' }),
+    page.getByRole('button', { name: 'Tuesday, October 13, 2026, activities' }),
   ).toBeFocused()
   await expect(
     page.getByRole('list', { name: 'Daily activities' }).locator('.timeline-item'),
@@ -149,7 +147,7 @@ test('busy, light, empty and long-task fixtures keep timeline and summaries cons
   await page.goto('/app?date=2026-10-13')
   await expect(page.locator('.timeline-item')).toHaveCount(2)
   await expect(page.locator('.stat-card').first()).toContainText('1h 30m')
-  await expect(page.locator('.day-summary')).toContainText('6h 30m')
+  await expect(page.locator('.day-summary')).toContainText('1h 30m')
   await page.goto('/app?date=2026-10-14')
   await expect(page.getByText('No activities logged for this day.')).toBeVisible()
   await page.getByRole('button', { name: 'Log first activity' }).click()
@@ -183,12 +181,21 @@ test('loading skeletons and retryable error states render on every data screen',
     ).toBeVisible()
     await expect(page.locator('.skeleton').first()).toBeVisible()
     await page.screenshot({ path: `artifacts/screenshots/${name}-loading.png`, fullPage: true })
+    if (route !== '/app/settings')
+      await page.evaluate(() =>
+        localStorage.setItem(
+          'devtrack-e2e-activity-options',
+          JSON.stringify({ readError: 'unavailable' }),
+        ),
+      )
     await page.goto(route + '?preview=error')
     await expect(page.getByRole('alert')).toBeVisible()
     await page.screenshot({ path: `artifacts/screenshots/${name}-error.png`, fullPage: true })
+    if (route !== '/app/settings')
+      await page.evaluate(() => localStorage.removeItem('devtrack-e2e-activity-options'))
     await page.getByRole('button', { name: 'Try again' }).click()
     await expect(page.getByRole('alert')).not.toBeVisible()
-    await expect(page).not.toHaveURL(/preview=error/)
+    if (route === '/app/settings') await expect(page).not.toHaveURL(/preview=error/)
     await expect(page.getByRole('heading', { level: 1 })).toBeVisible()
   }
 })

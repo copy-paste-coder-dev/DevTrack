@@ -8,6 +8,7 @@ interface ConfirmationDialogProps {
   confirmLabel?: string
   onConfirm: () => void
   onCancel: () => void
+  busy?: boolean
 }
 export function ConfirmationDialog({
   title,
@@ -15,16 +16,17 @@ export function ConfirmationDialog({
   confirmLabel = 'Delete',
   onConfirm,
   onCancel,
+  busy = false,
 }: ConfirmationDialogProps) {
   return (
-    <Dialog title={title} onClose={onCancel}>
+    <Dialog title={title} onClose={onCancel} busy={busy}>
       <div className="delete-confirmation">
         {children}
         <div className="dialog-actions">
-          <Button variant="secondary" onClick={onCancel}>
+          <Button variant="secondary" onClick={onCancel} disabled={busy}>
             Cancel
           </Button>
-          <Button variant="danger" onClick={onConfirm}>
+          <Button variant="danger" onClick={onConfirm} loading={busy}>
             {confirmLabel}
           </Button>
         </div>

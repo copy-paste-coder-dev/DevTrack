@@ -30,16 +30,26 @@ Real Google popup authentication, a central session provider/hook, protected/gue
 
 Local checks pass: lint/build, seven native tests, 27 full browser tests plus the added focused offline test. Test authentication is supplied by an isolated local-only adapter; it is excluded from ordinary dev/production and cannot be used in production builds. These checks do not verify live Google/Firebase behavior.
 
-All six local Firebase settings are present and ignored. Google/domain setup, rule publishing/enforcement, real popup/profile creation, repeated-login timestamps, persistent refresh and logout verification remain pending. Computer Use stopped because Chrome's URL could not be reliably identified. No live success or remote setup is claimed. The official Firebase plugin was suggested; connection is not confirmed. See [the complete 22-part report](PHASE_2_REPORT.md) and README for setup steps.
+All six local Firebase settings are present and ignored. Implementation checkpoint: `34bef16`. During Phase 3, the real authenticated account was observed at /app, confirming an existing session and identity. The full popup/profile/relogin/refresh/logout flow is still unverified. The earlier Computer Use attempt stopped on browser URL detection; the later attempt read Chrome but input recovery failed. The Firebase plugin remains uninstalled/unconnected. See [the complete 22-part report](PHASE_2_REPORT.md) and README for setup steps.
 
 PHASE 2 STATUS: INCOMPLETE
 
+## Phase 3 implementation
+
+Real user-scoped activity CRUD, daily/monthly queries, cleaned-up realtime listeners, functional create/edit/delete dialogs, editable dates, Date/Timestamp mapping, service/form validation, server audit fields, owner-only activity rules, a daily composite index definition, real summaries and calendar markers are implemented. Dashboard/Calendar production fixture imports are removed; fixtures remain only in the excluded test adapter. Settings remain local previews. Remaining/goal figures are hidden until preferences are persisted.
+
+Local checks: lint, production build, formatting and whitespace checks pass; 14 native tests and the final complete 34-scenario browser suite pass. Responsive checks cover 390, 430, 768, 1024, 1440 and 1920px. An earlier test-adapter error simulation was fixed; workspace edits were paused for the final browser run to avoid Vite reloads resetting preview state.
+
+Live Chrome showed the real account in /app and the Firestore index/configuration error. Browser input failed with coordinate input geometry is unavailable, then click_element timeout after a refreshed observation. No rule/index deployment or actual backend CRUD success is claimed. Remaining: publish/review rules, enable the defined index, verify remote create/read/update/date move/delete/refresh/month queries/audit fields and guest/cross-user denial. See [the 27-part Phase 3 report](PHASE_3_REPORT.md) and README's live checklist. The phase remains incomplete despite its implementation checkpoint.
+
+PHASE 3 STATUS: INCOMPLETE
+
 ## Pending details for later phases
 
-1. **Finish Phase 2 verification:** enable/confirm Google and authorized domains, publish/validate the owner profile rules, then test real sign-in/profile/relogin/refresh/logout. Real Google authentication code is implemented; activity previews still use mock data.
-2. **Phase 3 — Firestore activities:** define user-scoped activity documents and Timestamp/timezone policy, activity rules and emulator coverage, then connect queries and real activity create/edit/delete. Adapt service data to the existing typed presentation props.
+1. **Finish Phase 2 verification:** complete the observed real session's profile/relogin/refresh/logout checks and verify owner profile rules. No production mock identity remains.
+2. **Finish Phase 3 live validation:** deploy rules/indexes, resolve the live query error and verify real CRUD/date ranges/audit fields/cross-user isolation. The implementation is ready; synthetic tests alone do not verify the remote project.
 3. **Phase 5 — persistent preferences:** store work hours, time format and enabled/custom types; apply preferences consistently across screens. Current controls are local previews that reset after leaving settings.
-4. **Phase 4 — business rules / Phase 6 summaries:** first/next start defaults, overlap/end-order validation, duration persistence, break policy and accurate daily/status summaries. The future-start helper is presentation only.
+4. **Phase 4 — business rules:** first/next start defaults, overlap prevention, configured day start, gap detection and advanced time validation. Basic valid-time/duration calculations and daily/status summaries are already implemented in Phase 3. The future-start helper remains presentation only.
 5. **Optional later scope:** functional Week/Day layouts, statistics/reports, integrations, offline behavior and deployment. Week/Day placeholders satisfy the current Phase 1 specification.
 
-No blockers remain for Phase 0/1. Phase 2 code is implemented; its required live verification is pending. Installed Chrome UI tests pass; physical devices, other browsers and live Firebase behavior are unverified. No deployment or remote push was performed.
+No blockers remain for Phase 0/1. Phase 2/3 implementations are ready; required live verification remains pending. Installed Chrome UI tests pass; physical devices and other browsers are unverified. No hosting deployment or remote push was performed.

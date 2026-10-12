@@ -6,8 +6,9 @@ interface DialogProps extends PropsWithChildren {
   title: string
   eyebrow?: string
   onClose: () => void
+  busy?: boolean
 }
-export function Dialog({ title, eyebrow, onClose, children }: DialogProps) {
+export function Dialog({ title, eyebrow, onClose, children, busy = false }: DialogProps) {
   const dialog = useRef<HTMLDialogElement>(null)
   const titleId = useId()
   useEffect(() => {
@@ -27,7 +28,7 @@ export function Dialog({ title, eyebrow, onClose, children }: DialogProps) {
       className="activity-dialog"
       onCancel={(event) => {
         event.preventDefault()
-        onClose()
+        if (!busy) onClose()
       }}
       onClick={(event) => {
         const bounds = event.currentTarget.getBoundingClientRect()
@@ -38,7 +39,7 @@ export function Dialog({ title, eyebrow, onClose, children }: DialogProps) {
             event.clientY < bounds.top ||
             event.clientY > bounds.bottom)
         )
-          onClose()
+          if (!busy) onClose()
       }}
     >
       <div className="dialog-header">
@@ -46,7 +47,13 @@ export function Dialog({ title, eyebrow, onClose, children }: DialogProps) {
           {eyebrow && <span className="eyebrow">{eyebrow}</span>}
           <h2 id={titleId}>{title}</h2>
         </div>
-        <Button variant="ghost" className="icon-button" aria-label="Close dialog" onClick={onClose}>
+        <Button
+          variant="ghost"
+          className="icon-button"
+          aria-label="Close dialog"
+          onClick={onClose}
+          disabled={busy}
+        >
           <X size={20} />
         </Button>
       </div>

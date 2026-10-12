@@ -1,5 +1,5 @@
 import { useState } from 'react'
-import { format, parseISO } from 'date-fns'
+import { format, startOfMonth } from 'date-fns'
 import { CalendarDays, Plus } from 'lucide-react'
 import { PageContainer } from '../../components/layout/PageContainer'
 import { Card } from '../../components/ui/Card'
@@ -10,18 +10,20 @@ import { MonthCalendar } from './components/MonthCalendar'
 import { useSelectedDay } from './hooks/useSelectedDay'
 import { ActivityTimeline } from '../activities/components/ActivityTimeline'
 import { ActivityDialog, type DialogSelection } from '../activities/components/ActivityDialog'
-import { demoDateKey, getMockDay } from '../../mocks/activities.mock'
-import { calendarActivityDates } from '../../mocks/calendar.mock'
-import { usePreviewState } from '../../mocks/usePreviewState'
+import { useActivitiesByRange } from '../activities/hooks/useActivitiesByRange'
+import { getActivityDates, sumDurationMinutes } from '../activities/utils/activitySummary'
+import { getMonthDateRange } from '../../utils/date'
 import { formatDuration } from '../../utils/duration'
 
 type CalendarView = 'Month' | 'Week' | 'Day'
 export function CalendarPage() {
-  const { selected, dateKey, selectDay, calendarRevision } = useSelectedDay()
-  const { state, retry } = usePreviewState()
+  const { selected, dateKey, selectDay } = useSelectedDay()
+  const range = getMonthDateRange(selected)
+  const monthData = useActivitiesByRange(range.startDateKey, range.endDateKey)
+  const { isLoading, error, retry } = monthData
   const [dialog, setDialog] = useState<DialogSelection | null>(null)
   const [view, setView] = useState<CalendarView>('Month')
-  const { activities, summary } = getMockDay(dateKey)
+  const activities = monthData.activities.filter((activity) => activity.dateKey === dateKey)
   return (
     <PageContainer>
       <div className="page-heading">
@@ -31,7 +33,7 @@ export function CalendarPage() {
           <p>View and manage your daily activities.</p>
         </div>
         <div className="page-heading-actions">
-          <Button variant="secondary" onClick={() => selectDay(parseISO(demoDateKey))}>
+          <Button variant="secondary" onClick={() => selectDay(new Date())}>
             <CalendarDays size={15} />
             Today
           </Button>
@@ -74,25 +76,26 @@ export function CalendarPage() {
           <Card className="calendar-view-placeholder">
             <CalendarDays size={30} />
             <h2>{view} view is on the roadmap</h2>
-            <p>Explore the month view to select a date and review its sample activities.</p>
+            <p>Explore the month view to select a date and review its activities.</p>
             <Button variant="secondary" onClick={() => setView('Month')}>
               Back to month view
             </Button>
           </Card>
-        ) : state === 'loading' ? (
+        ) : isLoading ? (
           <CalendarLoadingState />
-        ) : state === 'error' ? (
+        ) : error ? (
           <Card>
-            <ErrorState title="Unable to load your calendar." onRetry={retry} />
+            <ErrorState title="Unable to load your calendar." description={error} onRetry={retry} />
           </Card>
         ) : (
           <div className="calendar-page-grid">
             <Card className="calendar-main">
               <MonthCalendar
-                key={format(selected, 'yyyy-MM') + calendarRevision}
                 selected={selected}
                 onSelect={selectDay}
-                activityDates={calendarActivityDates}
+                month={startOfMonth(selected)}
+                onMonthChange={selectDay}
+                activityDates={getActivityDates(monthData.activities)}
                 expanded
               />
             </Card>
@@ -102,7 +105,7 @@ export function CalendarPage() {
                 <h2>{format(selected, 'EEEE, MMM d')}</h2>
                 <p>
                   {activities.length} activities <span>·</span>{' '}
-                  {formatDuration(summary.loggedMinutes)} logged
+                  {formatDuration(sumDurationMinutes(activities))} logged
                 </p>
               </div>
               <ActivityTimeline
@@ -116,11 +119,14 @@ export function CalendarPage() {
           </div>
         )}
       </div>
-      <div className="page-note">
-        October 12: busy day · October 13: light day · October 9: long-task example. Other dates are
-        empty.
-      </div>
-      {dialog && <ActivityDialog {...dialog} dateKey={dateKey} onClose={() => setDialog(null)} />}
+      {dialog && (
+        <ActivityDialog
+          key={dialog.activity?.id ?? 'create'}
+          {...dialog}
+          dateKey={dateKey}
+          onClose={() => setDialog(null)}
+        />
+      )}
     </PageContainer>
   )
 }

@@ -144,4 +144,6 @@ Phase 3: real activity CRUD, queries and activity rules. Phase 4: smart start ti
 - [ ] Real Google login, profile creation/relogin, session restoration and logout verified.
 - [ ] Completed phase committed after all required live checks pass.
 
+Follow-up during Phase 3: native browser observation at http://127.0.0.1:5173/app showed the real authenticated account in the shell. No new OAuth popup, profile lifecycle/relogin, refresh or logout test was performed. Full Phase 2 status therefore remains incomplete. Implementation was saved as checkpoint commit `34bef16` before Phase 3 changes. Phase 3 now extends activity rules and data paths; the profile-only descriptions above record the Phase 2 checkpoint.
+
 PHASE 2 STATUS: INCOMPLETE

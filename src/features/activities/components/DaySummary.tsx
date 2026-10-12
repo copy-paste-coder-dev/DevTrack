@@ -7,13 +7,9 @@ export function DaySummary({
   startTime,
   endTime,
   loggedMinutes,
-  remainingMinutes,
   workMinutes,
-  goalMinutes,
   breakMinutes,
 }: DaySummaryData) {
-  const progress =
-    goalMinutes > 0 ? Math.min(100, Math.round((workMinutes / goalMinutes) * 100)) : 0
   return (
     <Card className="day-summary">
       <div className="section-heading">
@@ -50,33 +46,10 @@ export function DaySummary({
           <dd>{formatDuration(breakMinutes)}</dd>
         </div>
         <div>
-          <dt>Remaining</dt>
-          <dd>{formatDuration(remainingMinutes)}</dd>
+          <dt>Work time</dt>
+          <dd>{formatDuration(workMinutes)}</dd>
         </div>
       </dl>
-      <div className="focus-progress">
-        <div>
-          <span>
-            Work time <span className="muted">/ {formatDuration(goalMinutes)} goal</span>
-          </span>
-          <strong>{formatDuration(workMinutes)}</strong>
-        </div>
-        <div
-          className="progress-track"
-          role="progressbar"
-          aria-label="Sample daily work goal"
-          aria-valuenow={progress}
-          aria-valuemin={0}
-          aria-valuemax={100}
-        >
-          <span style={{ width: `${progress}%` }} />
-        </div>
-        <p>
-          {remainingMinutes > 0
-            ? `${formatDuration(remainingMinutes)} of room left in your day.`
-            : 'Your sample work goal is complete.'}
-        </p>
-      </div>
     </Card>
   )
 }

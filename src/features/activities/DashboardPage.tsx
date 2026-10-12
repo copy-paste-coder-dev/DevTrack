@@ -1,5 +1,5 @@
 import { useState } from 'react'
-import { addDays, format, parseISO } from 'date-fns'
+import { addDays, format, isToday, startOfMonth } from 'date-fns'
 import {
   ArrowUpRight,
   CalendarDays,
@@ -25,27 +25,28 @@ import { useSelectedDay } from '../calendar/hooks/useSelectedDay'
 import { ActivityTimeline } from './components/ActivityTimeline'
 import { ActivityDialog, type DialogSelection } from './components/ActivityDialog'
 import { DaySummary } from './components/DaySummary'
-import { demoDateKey, getMockDay } from '../../mocks/activities.mock'
-import { calendarActivityDates } from '../../mocks/calendar.mock'
-import { usePreviewState } from '../../mocks/usePreviewState'
+import { useActivitiesByDate } from './hooks/useActivitiesByDate'
+import { useActivitiesByRange } from './hooks/useActivitiesByRange'
+import { getActivityDates, getDaySummary, countActivitiesByStatus } from './utils/activitySummary'
+import { getMonthDateRange } from '../../utils/date'
 import { formatDuration } from '../../utils/duration'
 
 export function DashboardPage() {
-  const { selected, dateKey, selectDay, calendarRevision } = useSelectedDay()
-  const { state, retry } = usePreviewState()
+  const { selected, dateKey, selectDay } = useSelectedDay()
+  const { activities, isLoading, error, retry } = useActivitiesByDate(dateKey)
+  const range = getMonthDateRange(selected)
+  const monthData = useActivitiesByRange(range.startDateKey, range.endDateKey)
   const [dialog, setDialog] = useState<DialogSelection | null>(null)
-  const { activities, summary, counts } = getMockDay(dateKey)
+  const summary = getDaySummary(activities)
+  const counts = countActivitiesByStatus(activities)
   return (
     <PageContainer className="dashboard-page">
       <div className="dashboard-top">
         <div className="page-heading dashboard-heading">
           <div>
             <span className="eyebrow">YOUR WORK, IN FOCUS</span>
-            <h1>{dateKey === demoDateKey ? 'Today' : format(selected, 'EEEE')}</h1>
-            <p>
-              {format(selected, 'EEEE, MMMM d, yyyy')}
-              <span className="sample-badge">Sample day</span>
-            </p>
+            <h1>{isToday(selected) ? 'Today' : format(selected, 'EEEE')}</h1>
+            <p>{format(selected, 'EEEE, MMMM d, yyyy')}</p>
           </div>
         </div>
         <div className="day-switcher">
@@ -57,7 +58,7 @@ export function DashboardPage() {
           >
             <ChevronLeft size={17} />
           </Button>
-          <Button variant="ghost" onClick={() => selectDay(parseISO(demoDateKey))}>
+          <Button variant="ghost" onClick={() => selectDay(new Date())}>
             Today
           </Button>
           <Button
@@ -73,9 +74,9 @@ export function DashboardPage() {
           <Plus size={17} />
           Add activity
         </Button>
-        {state === 'loading' ? (
+        {isLoading ? (
           <StatsSkeleton />
-        ) : state === 'ready' ? (
+        ) : !error ? (
           <div className="stats-grid">
             <StatCard
               label="Total logged"
@@ -115,22 +116,37 @@ export function DashboardPage() {
           </div>
         ) : null}
       </div>
-      {state === 'loading' ? (
+      {isLoading ? (
         <DashboardSkeleton />
-      ) : state === 'error' ? (
+      ) : error ? (
         <Card>
-          <ErrorState onRetry={retry} />
+          <ErrorState
+            description={error}
+            onRetry={() => {
+              retry()
+              monthData.retry()
+            }}
+          />
         </Card>
       ) : (
         <div className="dashboard-grid">
           <div className="day-context">
             <Card>
               <MonthCalendar
-                key={format(selected, 'yyyy-MM') + calendarRevision}
                 selected={selected}
                 onSelect={selectDay}
-                activityDates={calendarActivityDates}
+                month={startOfMonth(selected)}
+                onMonthChange={selectDay}
+                activityDates={getActivityDates(monthData.activities)}
               />
+              {monthData.isLoading && <p role="status">Loading calendar markers…</p>}
+              {monthData.error && (
+                <ErrorState
+                  title="Unable to load calendar markers."
+                  description={monthData.error}
+                  onRetry={monthData.retry}
+                />
+              )}
               <Link to={`/app/calendar?date=${dateKey}`} className="calendar-link">
                 Open calendar <ArrowUpRight size={14} />
               </Link>
@@ -167,7 +183,14 @@ export function DashboardPage() {
           </Card>
         </div>
       )}
-      {dialog && <ActivityDialog {...dialog} dateKey={dateKey} onClose={() => setDialog(null)} />}
+      {dialog && (
+        <ActivityDialog
+          key={dialog.activity?.id ?? 'create'}
+          {...dialog}
+          dateKey={dateKey}
+          onClose={() => setDialog(null)}
+        />
+      )}
     </PageContainer>
   )
 }

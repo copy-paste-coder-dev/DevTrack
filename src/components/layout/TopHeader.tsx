@@ -1,4 +1,4 @@
-import { FlaskConical } from 'lucide-react'
+import { LockKeyhole } from 'lucide-react'
 import { Brand } from './Brand'
 import { useAuth } from '../../features/auth/hooks/useAuth'
 import { UserAvatar } from '../../features/auth/components/UserAvatar'
@@ -15,10 +15,8 @@ export function TopHeader() {
       <Brand />
       <div className="header-account">
         <span className="workspace-status">
-          <FlaskConical size={13} />
-          <span>
-            Sample activities <span className="preview-detail">· Changes are not saved</span>
-          </span>
+          <LockKeyhole size={13} />
+          <span>Your personal workspace</span>
         </span>
         <details
           className="account-menu"

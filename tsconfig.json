@@ -4,7 +4,10 @@
     "lib": ["ES2022", "DOM", "DOM.Iterable"],
     "module": "ESNext",
     "moduleResolution": "Bundler",
-    "paths": { "#auth-service": ["./src/features/auth/services/auth.service.ts"] },
+    "paths": {
+      "#auth-service": ["./src/features/auth/services/auth.service.ts"],
+      "#activity-service": ["./src/features/activities/services/activity.service.ts"]
+    },
     "jsx": "react-jsx",
     "strict": true,
     "noUnusedLocals": true,

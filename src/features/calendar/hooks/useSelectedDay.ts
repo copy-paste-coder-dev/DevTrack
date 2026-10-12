@@ -1,16 +1,13 @@
 import { useSearchParams } from 'react-router-dom'
 import { useState } from 'react'
-import { isValid, parseISO } from 'date-fns'
-import { demoDateKey } from '../../../mocks/activities.mock'
-import { toDateKey } from '../../../utils/date'
+import { parseISO } from 'date-fns'
+import { isDateKey, toDateKey } from '../../../utils/date'
 
 export function useSelectedDay() {
   const [params, setParams] = useSearchParams()
   const [calendarRevision, setCalendarRevision] = useState(0)
-  const value = params.get('date') ?? demoDateKey
-  const parsed = parseISO(value)
-  const selected =
-    /^\d{4}-\d{2}-\d{2}$/.test(value) && isValid(parsed) ? parsed : parseISO(demoDateKey)
+  const value = params.get('date') ?? toDateKey(new Date())
+  const selected = isDateKey(value) ? parseISO(value) : new Date()
   function selectDay(date: Date) {
     setCalendarRevision((previous) => previous + 1)
     setParams((previous) => {

@@ -1,112 +1,132 @@
 # DevTrack
 
-A small calendar-based developer activity tracker. Dark navy surfaces, restrained cyan and purple accents, and a workspace built for long focus sessions.
+A calendar-based developer activity tracker with a dark neon workspace. Google Authentication protects the app; activity data uses Cloud Firestore. Settings remain a local preview.
 
 ## Setup
 
-Requires Node.js 24+ and npm. The Firebase tests use Node's built-in TypeScript support.
+Requires Node.js 24+ and npm. On Windows PowerShell with restricted script execution, use `npm.cmd`.
 
 ```sh
 npm install
 npm run dev
 npm run lint
 npm run build
-npm run preview
+npm test
 ```
 
-On Windows PowerShell with restricted script execution, use `npm.cmd` in place of `npm`. Production hosting must rewrite unknown application paths to `index.html` for React Router.
+Production hosting must rewrite application paths to `index.html` for React Router. No production hosting deployment is included.
 
-## Stack and architecture
+## Architecture
 
-React, strict TypeScript, Vite, React Router, Tailwind CSS v4 with its Vite plugin, Firebase modular SDK, date-fns, Lucide, Sonner, React Hook Form and Zod. No global state framework or large component library.
+React, strict TypeScript, Vite, React Router, Tailwind v4, Firebase modular SDK, date-fns, Lucide, Sonner, React Hook Form and Zod.
 
 ```text
-src/app/                  Central router and providers
-src/components/ui/        Small accessible primitives
-src/components/layout/    App shell, branding, page container
-src/components/feedback/  Error fallback, retry states and skeletons
-src/features/activities/  Activity screens and foundational types
-src/features/auth/        Auth context, route guards, services and profile models
-src/features/calendar/    Calendar screen
-src/features/settings/    Settings screen
-src/firebase/             Configuration and service factories
-src/mocks/                Typed activity, calendar and settings fixtures
-src/styles/               Design tokens and global styling
-src/utils/                Local date formatting helpers
+src/app/                   Router and providers
+src/components/            Shared UI, layout, feedback and dialogs
+src/features/auth/         Central session, guards, auth and profile services
+src/features/activities/   CRUD service, realtime hooks, domain models, forms and summaries
+src/features/calendar/     Selected date and month calendar
+src/features/settings/     Local settings preview
+src/firebase/              Validated singleton factories
+src/mocks/                 Settings fixture and settings preview state only
+src/utils/                 Local date/time and duration helpers
+tests/support/             Isolated synthetic auth/activity services and fixtures
 ```
 
-Styles use CSS design tokens for backgrounds, text, semantic colors, radii, shadows, focus and motion. Tailwind is available for layout utilities. Providers compose error handling, authentication and toasts. `/app`, `/app/calendar` and `/app/settings` require a Firebase session; `/login` is guest-only. `/` routes according to the restored session.
+UI → hooks → services → Firebase. Pages never call Firestore directly. Production activity pages never fall back to fixture data. Activities use Date objects in the domain/UI; services map Firestore Timestamp fields. Routes load on demand. Theme tokens, focus treatment, native dialogs and the Phase 1 responsive layout are retained.
 
 ## Firebase setup
 
-1. Create a project at the [Firebase Console](https://console.firebase.google.com/).
-2. Register a web app in Project settings and copy its web configuration.
-3. Copy `.env.example` to `.env.local`. Fill all six `VITE_FIREBASE_*` values with your project configuration. Restart the dev server after edits.
-4. Open **Authentication → Sign-in method → Google**, enable the provider, choose a project support email and save. GitHub/email sign-in remain disabled in DevTrack.
-5. Open **Authentication → Settings → Authorized domains**. Add `localhost` and `127.0.0.1` for local development. Add your actual production domain after deploying to Firebase Hosting/Vercel or another host. Do not assume local domains are already present. Domains do not include a protocol, port or path.
-6. Create a **Cloud Firestore Standard edition** database in your intended region using production mode. Open its **Rules** tab, replace the rules with [firestore.rules](firestore.rules), then publish. The rules permit only owner profile access; all activities/settings remain denied. In an existing shared database, review these rules before replacing other applications' rules.
-7. Restart Vite after editing environment files. Open `http://127.0.0.1:5173/login` and use Continue with Google. The ignored `.env` is also supported by Vite; `.env.local` is recommended for local settings. Do not commit either.
+1. Create/select your development project in [Firebase Console](https://console.firebase.google.com/), register a web app and copy its web configuration.
+2. Copy `.env.example` to ignored `.env.local` and fill all six `VITE_FIREBASE_*` settings. Ignored `.env` also works. Restart Vite after changes. Use the same project for Authentication and Firestore.
+3. In **Authentication → Sign-in method → Google**, enable Google and choose the support email. Other providers remain disabled in DevTrack.
+4. In **Authentication → Settings → Authorized domains**, add `localhost` and `127.0.0.1` separately. Use hostnames without protocol, port or path. Add the actual hosting hostname when deploying.
+5. Create a **Cloud Firestore Standard edition** database in production mode. In its **Rules** tab, publish [firestore.rules](firestore.rules). Review before replacing rules in a shared project. These rules allow owner profile access and owner activity CRUD, and deny settings/other paths.
+6. In **Firestore → Indexes → Composite → Add index**, create collection ID `activities`, query scope **Collection**, with `dateKey Ascending` and `startAt Ascending`. Wait until enabled. The same definition is in [firestore.indexes.json](firestore.indexes.json).
+7. Run `npm run dev`, open the URL Vite prints (normally `http://127.0.0.1:5173/login`) and sign in with Google.
 
-If Firebase CLI is already installed and authenticated, deploy the same reviewed rules with `firebase deploy --only firestore:rules --project YOUR_DEVELOPMENT_PROJECT_ID`. `firebase.json` points to the rules file; no project ID or credentials are hardcoded. The CLI/emulators are not required for running the application.
+If Firebase CLI is installed and authenticated, deploy the reviewed files to the explicit development project:
 
-Firebase is initialized once through lazy factories. Auth initialization now runs on startup; incomplete configuration shows a safe setup error on the login page and does not expose protected screens. The config reader retains developer diagnostics listing missing variable names. Real `.env` files are ignored. Vite variables are client-visible Firebase web configuration, never Admin SDK/private credentials. Persisted activity times will use Firestore Timestamps in later phases; current date helpers use the browser's local timezone.
+```sh
+firebase deploy --only firestore:rules,firestore:indexes --project YOUR_DEVELOPMENT_PROJECT_ID
+```
 
-Official setup references: [Firebase web setup](https://firebase.google.com/docs/web/setup), [Tailwind Vite integration](https://tailwindcss.com/docs/installation/using-vite), [React Router data routing](https://reactrouter.com/start/data/installation).
+`firebase deploy --only firestore:rules` deploys only rules. `firebase.json` references both repository files without hardcoded credentials or a project ID. No CLI installation/authentication is required to run the app.
 
-## Phase plan
+Firebase factories validate configuration before initialization. Missing configuration produces a safe login setup error; developer diagnostics name missing variables. Vite web config is client-visible; never put Admin SDK/private credentials in it. Actual environment files stay out of Git.
 
-- Phase 0 (complete): foundation, tooling, routing, theme, UI primitives, Firebase factories and documentation.
-- Phase 1 (complete): polished UI based on the supplied collage, using clearly identified sample data; responsive dashboard, calendar, settings, activity dialogs and login preview.
-- Phase 2: Google authentication, session restoration, route protection, authenticated profiles and owner-scoped user profile writes; live validation status is tracked in [the Phase 2 report](docs/PHASE_2_REPORT.md).
-- Phase 3: Firestore activity CRUD. Phase 4: scheduling defaults/durations/overlap rules. Phase 5: persisted preferences. Phase 6: real calendar queries and daily summaries.
+## Authentication and profiles
 
-No authentication, Firestore CRUD, persisted settings, activity scheduling or analytics is included in Phase 0.
+`AuthProvider` owns one active `onAuthStateChanged` subscription with cleanup. `useAuth` exposes only the app user model and independent initialization/sign-in/sign-out states. `/app`, `/app/calendar` and `/app/settings` are protected; `/login` is guest-only; `/` routes after restoring the session. Safe return paths are limited to known internal app routes.
 
-## Tooling notes
+Firebase's default browser persistence restores sessions for the same origin. Guards hold content during initialization. Google popup success performs best-effort profile sync, then GuestRoute navigates. The profile transaction creates `users/{uid}` with identity fields, provider `google`, and server timestamps `createdAt`, `updatedAt`, `lastLoginAt`. Repeat login preserves `createdAt`. Profile failure or an eight-second timeout warns without signing out; a timed-out write may still finish.
 
-TypeScript is pinned to the supported 6.x line because typescript-eslint does not yet support TypeScript 7. Firebase's Node-only gRPC dependency is overridden to a patched 1.x version (>=1.13.6) to address GHSA-m9gg-hp2v-232j and GHSA-f596-whhp-79r4; the web application uses Firebase's browser implementation. Revisit the override when Firebase updates its own dependency.
+Desktop and mobile show the authenticated identity, photo/initials fallback and shared logout. Logout waits for Firebase's confirmed session event. Credentials/tokens are managed by Firebase and are not copied to profiles, application logs or custom storage.
 
-`npm test` checks configuration/SDK initialization and pure auth/profile helpers without backend access. `npm run test:e2e` checks auth routing/interactions and responsive layouts using locally installed Google Chrome. Tests use a local-only auth service adapter on port 5174; they do not prove real Google OAuth, Firebase persistence or deployed rules. Vite rejects production builds using that adapter's `e2e` mode. Normal dev/production always use the Firebase implementation. To use bundled Chromium elsewhere, remove `channel: 'chrome'` in `playwright.config.ts` and run `npx playwright install chromium`.
+## Activity data and queries
 
-`npm run format` formats source and documentation; `npm run format:check` verifies it. The lockfile pins the exact dependency versions. UI routes are loaded on demand to keep the initial bundle small.
+Path: `users/{uid}/activities/{activityId}`. No duplicated UID or document ID in the body:
 
-## Phase 1 preview
+```text
+dateKey            YYYY-MM-DD (local calendar date)
+activityType       centralized activity type
+taskName           trimmed, 1–160 characters
+status             in_progress | on_hold | completed
+startAt / endAt    Firestore Timestamp
+durationMinutes    rounded elapsed minutes, positive integer
+notes              trimmed string, default "", up to 1,000 characters
+createdAt          server timestamp, immutable on edit
+updatedAt          server timestamp on create/edit
+```
 
-- `/app`: five summary cards, sample activity timeline, mini calendar, workday summary and date navigation.
-- `/app/calendar`: navigable month, keyboard day selection, selected-day list, empty-day state and Month/Week/Day tabs (Week and Day are roadmap placeholders).
-- `/app/settings`: editable work-hours controls, activity-type switches, custom-category preview and reset.
-- `/login`: real Google sign-in, with GitHub/email marked Soon. Protected workspace access requires authentication.
-- Add/edit dialogs share `ActivityForm`, validate required fields and show the future automatic-start-time hint. Save/update/delete preview actions show a toast and leave the sample timeline intact. Native dialogs support Escape, modal keyboard focus, internal scrolling and focus restoration.
+Create uses a generated document reference and setDoc. Update changes mutable fields with updateDoc, including dateKey when moving dates; delete uses deleteDoc. Basic validation runs in both the form and service. Date/time construction uses local numeric date components, never a forced UTC string. Invalid/nonexistent dates or local times are rejected. End must follow start within the chosen day. Duration is calculated by one shared utility. Overlap is allowed in Phase 3.
 
-The default sample day is **Monday, October 12, 2026**, matching the date in the brief (the collage's weekday was inconsistent). It shows six activities: 6h 30m logged, 30m break, 6h work, four completed, one in progress and one on hold. October 13 is a distinct light day with two activities and 1h 30m logged. October 9 demonstrates a long task name and an eight-hour activity. Other dates are empty. “Today” returns to the fixed sample day in this UI preview. Totals are fixture values, not production calculations. Settings reset on leaving the page and do not alter fixture data.
+Dashboard subscribes to the selected day: dateKey equality plus startAt ascending. Its mini calendar subscribes to the selected month. Calendar subscribes once to its month range, ordering by dateKey; its selected-day list filters that result without another day listener. Month navigation selects the first day of the new month. Listeners unsubscribe on route/date/UID changes; stale results are hidden while a new query loads. No full history download occurs.
 
-The responsive design follows the supplied visual language with restrained glow. All five summary cards remain visible at smaller sizes. Mobile layouts show a profile avatar, bottom navigation, a full-width Add Activity button after stats, then timeline, mini calendar and day summary. The login illustration is a lightweight CSS/code composition. Real statistics and alternate calendar logic remain later scope.
+The checked-in collection-scope composite index supports the daily equality-plus-order query, matching the indexing pattern in [Firebase's index documentation](https://firebase.google.com/docs/firestore/query-data/index-overview). Monthly range filtering/order uses the same dateKey field and its default ascending single-field index. Remote index availability/error behavior remains a live verification item. If a query reports failed-precondition, check the index above and any project-specific single-field exemptions.
 
-For deterministic state previews, append `?preview=loading` or `?preview=error` to `/app`, `/app/calendar` or `/app/settings`. Try Again restores the normal mock view. These states do not simulate network traffic or write data.
+Realtime snapshots update timelines, counts, markers and summaries. Stats derive total logged, activity count and three status counts. Day summary derives earliest start, latest end, logged/work/break totals. Sample remaining-time/goal figures are removed until preferences are persisted. Empty days display a first-activity action with the selected date prefilled; Today uses the actual browser day.
 
-Chrome tests capture screenshots in ignored `artifacts/screenshots/` and verify all screens at 390×844, 430×932, 768×1024, 1024×768, 1440×900 and 1920×1080. See the [detailed Phase 1 report](docs/PHASE_1_REPORT.md) and [implementation status and pending work](docs/PROGRESS.md) for the handoff.
+Save/update/delete disable their own actions, retain dialogs while pending, and close/reset only after success. Failures keep input and permit retry. Read failures show a retry action. Known-offline writes fail with connection guidance. If connectivity drops after a write begins, Firebase may keep the write pending until reconnection; the dialog stays pending and no success is reported prematurely. No extra offline persistence, timeout cancellation or optimistic write layer is added.
 
-## Authentication and user profiles
+Rules restrict activities to their path owner, validate the exact field set/enums/lengths/basic timestamps and positive bounded duration, require server audit timestamps and preserve createdAt. They do not implement overlap checks or timezone-aware dateKey matching; service validation owns those local date checks. Source rules alone do not protect a remote project until published.
 
-`AuthProvider` owns one active `onAuthStateChanged` subscription, correctly cleaned up under Strict Mode. `useAuth` exposes an app-level `AuthUser`, initialization/sign-in/sign-out state and actions. Visual components never receive Firebase `User` objects or call SDK methods. `auth.service.ts` owns Google popup/sign-out/subscription; `userProfile.service.ts` owns Firestore profile access. Firestore code is loaded after sign-in.
+## Live verification checklist
 
-Firebase's default persistent browser auth restores sessions for the same origin. During restoration, guards show a branded loading screen; login and protected content wait for the initial result. Only `GuestRoute` performs post-login navigation, after best-effort profile sync. Safe `returnTo` values are limited to the three known app paths, including their query/hash. External/unknown paths fall back to `/app`.
+Phase 2 and Phase 3 cannot be declared complete from synthetic tests alone.
 
-Successful Google login syncs `users/{uid}` in a transaction. New profiles contain `uid`, nullable `displayName`/`email`/`photoURL`, `provider: 'google'`, and server timestamps `createdAt`, `updatedAt`, `lastLoginAt`. Later logins update identity fields and the last two timestamps while preserving `createdAt`, including concurrent first logins. Profile failure or an eight-second sync timeout warns without ending the authenticated session; a timed-out write may still finish in the background. The next login retries sync.
+1. Enable Google, authorize the app hostname, create Firestore, publish rules and enable the index above.
+2. As a guest, verify protected routes reach login. Sign in, verify real name/email/photo, and inspect the single users/{uid} profile and its audit timestamps.
+3. Refresh Dashboard/Calendar/Settings. Logout from desktop/mobile, confirm protected access redirects, then sign in again and verify profile createdAt is preserved.
+4. Select October 12, 2026; add a Jira task from 09:00 to 10:30 with special characters and multiline notes. Verify users/{uid}/activities/{id} contains the correct timestamps, 90-minute duration and server audit values. Timeline/counts must update.
+5. Refresh; verify the same activity remains. Edit name/status/times and move its date to October 13. Verify the original document ID/createdAt remain, updatedAt changes, October 12 no longer includes it and October 13 does.
+6. Add a separate October 12 activity. Verify each day's list contains only its own data; Calendar markers/counts match both dates. Navigate to another month and back.
+7. Delete the test activity through confirmation. Verify its backend document and UI row/marker disappear, including after refresh.
+8. Test empty/long/multiline notes, blank/long names, invalid/equal/reversed times, double submission, failed reads/writes and retry without losing entered values.
+9. Use Rules Playground or an authenticated rules test client: owner activity get/list/create/update/delete allowed with valid audit fields; another UID and guests denied; ownership/schema additions and createdAt changes denied; unrelated collections denied. Server/Admin SDK access bypasses rules and cannot prove client isolation.
+10. Inspect browser errors and check loading/empty/error/timeline/forms/delete at 390, 430, 768, 1024 and 1440px.
 
-Rules restrict document get/create/update to the matching authenticated UID, validate profile fields and server audit timestamps, preserve creation time, and deny lists/deletes/other collections. No OAuth/ID/access tokens are copied to Firestore, logs or custom browser storage. Firebase manages credentials. Rules must be published in your project; a local file alone does not secure the remote database.
+Common fixes: unauthorized-domain → add the exact browser hostname; operation-not-allowed → enable Google; permission-denied → verify project/UID and publish updated rules; failed-precondition → provision the daily composite index; popup-blocked → allow popups; invalid/missing config → recheck six Vite values and restart.
 
-Sidebar and mobile account menu share the authenticated identity and avatar component, including initials and broken-image fallback. Both provide logout. Successful SDK sign-out makes protected routes redirect; failures show a retryable message and retain the session. Google is the only enabled UI provider. Activity data and settings still behave as Phase 1 mocks.
+## Tests and formatting
 
-## Live Phase 2 verification
+`npm test` runs native Node tests for config/auth/profile and activity date/duration/schema/mapper/summary helpers. These do not contact a backend.
 
-1. Enable Google, authorize local domains, create Firestore and publish the rules above.
-2. With no session, open `/`, `/app`, `/app/calendar` and `/app/settings`; each must reach login.
-3. Sign in with Google, complete the account chooser yourself, and verify the requested destination and your sidebar/mobile identity.
-4. In Firestore Data, verify one `users/{YOUR_UID}` record and all three server timestamps. Note `createdAt` for comparison.
-5. Refresh `/app`, then `/app/calendar` and `/app/settings`. The session must restore without displaying login.
-6. Logout from desktop/mobile. Open `/app` directly and confirm it redirects to login.
-7. Sign in again. Confirm the same document ID, unchanged `createdAt`, and newer `updatedAt`/`lastLoginAt`.
-8. In Firestore Rules Playground, test signed-out profile access (deny), owner get/create/update (allow with valid fields/timestamps), another UID (deny), profile list/delete (deny), and activity paths (deny). The CLI/emulator rule suite has not been introduced in this phase.
+`npm run test:e2e` runs locally installed Chrome against Vite's isolated `e2e` mode, with synthetic auth/activity services and fixed browser date/time. Default test port is 5174; if occupied, use another free port:
 
-Common setup failures: unauthorized-domain → add the exact browser hostname; operation-not-allowed → enable Google; popup-blocked → allow the Google popup; profile warning/permission-denied → create Firestore and publish the reviewed rules; missing/invalid config → verify all six local Vite values and restart Vite. Never paste passwords, OAuth credentials or ID tokens into issue reports.
+```powershell
+$env:DEVTRACK_E2E_PORT = '5175'
+npm.cmd run test:e2e -- --workers=3
+```
+
+Tests never reuse an existing server. Synthetic activity persistence is keyed by test UID in test-only storage; production code uses Firebase. E2E production builds are rejected. UI tests prove application interactions, not Google OAuth, deployed rules/indexes or real Firestore durability. Bundled Chromium can be used by removing `channel: 'chrome'` from Playwright config and installing Chromium through Playwright.
+
+Screenshots go to ignored `artifacts/screenshots/`; tests cover 390×844, 430×932, 768×1024, 1024×768, 1440×900 and 1920×1080. `npm run format:check` verifies formatting. The lockfile pins dependencies.
+
+## Phase status and remaining scope
+
+Phase 0/1 are complete and committed. Phase 2 code was checkpointed as `34bef16`; live Google/profile/persistence/logout checks are unconfirmed. Phase 3 implements real activity CRUD, month/day reads, summaries and rules; its live validation is tracked in [Phase 3 report](docs/PHASE_3_REPORT.md). See [progress](docs/PROGRESS.md) and [Phase 2 report](docs/PHASE_2_REPORT.md).
+
+Settings remain local previews and reset when leaving the screen. Preview loading/error URLs remain supported only for Settings in production. Test-only activity adapters can simulate read states. Week/Day views remain roadmap placeholders.
+
+Phase 4: previous-end defaults, overlap prevention and advanced time rules. Phase 5: saved preferences. Later phases: alternate calendar views, reports, integrations, timers, teams, AI and deployment. No advanced time intelligence or settings persistence was added here.

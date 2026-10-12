@@ -1,4 +1,24 @@
-import type { Activity, DaySummaryData } from '../features/activities/types/activity'
+import type { ActivityType, ActivityStatus } from '../../src/features/activities/types/activity'
+interface Activity {
+  id: string
+  dateKey: string
+  type: ActivityType
+  name: string
+  status: ActivityStatus
+  start: string
+  end: string
+  durationMinutes: number
+  notes: string
+}
+interface DaySummaryData {
+  startTime: string | null
+  endTime: string | null
+  loggedMinutes: number
+  remainingMinutes: number
+  workMinutes: number
+  goalMinutes: number
+  breakMinutes: number
+}
 
 export const demoDateKey = '2026-10-12'
 export interface MockDay {

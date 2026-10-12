@@ -14,7 +14,7 @@ export function EmptyState({
         <CalendarClock size={26} />
       </span>
       <h3>{title}</h3>
-      <p>Your workday starts at 09:00. Make room for your first block of focused work.</p>
+      <p>Make room for your first block of focused work.</p>
       <Button variant="secondary" onClick={onAdd}>
         Log first activity
       </Button>
