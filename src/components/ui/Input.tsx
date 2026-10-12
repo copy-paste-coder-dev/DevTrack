@@ -1,18 +1,40 @@
 import { useId, type InputHTMLAttributes, type SelectHTMLAttributes } from 'react'
 
-type InputProps = InputHTMLAttributes<HTMLInputElement> & { label: string; error?: string }
-export function Input({ label, error, id, className = '', ...props }: InputProps) {
+type InputProps = InputHTMLAttributes<HTMLInputElement> & {
+  label: string
+  error?: string
+  hint?: string
+}
+export function Input({ label, error, hint, id, className = '', required, ...props }: InputProps) {
   const generatedId = useId()
   const inputId = id ?? generatedId
   return (
     <div className={`field ${className}`}>
-      <label htmlFor={inputId}>{label}</label>
+      <label htmlFor={inputId}>
+        {label}
+        {required && (
+          <span className="required-mark" aria-hidden="true">
+            {' '}
+            *
+          </span>
+        )}
+      </label>
       <input
         id={inputId}
         aria-invalid={Boolean(error)}
-        aria-describedby={error ? `${inputId}-error` : undefined}
+        aria-describedby={
+          [hint ? `${inputId}-hint` : '', error ? `${inputId}-error` : '']
+            .filter(Boolean)
+            .join(' ') || undefined
+        }
+        required={required}
         {...props}
       />
+      {hint && (
+        <span id={`${inputId}-hint`} className="field-hint">
+          {hint}
+        </span>
+      )}
       {error && (
         <span id={`${inputId}-error`} className="field-error">
           {error}
@@ -22,13 +44,21 @@ export function Input({ label, error, id, className = '', ...props }: InputProps
   )
 }
 type SelectProps = SelectHTMLAttributes<HTMLSelectElement> & { label: string }
-export function Select({ label, id, className = '', ...props }: SelectProps) {
+export function Select({ label, id, className = '', required, ...props }: SelectProps) {
   const generatedId = useId()
   const selectId = id ?? generatedId
   return (
     <div className={`field ${className}`}>
-      <label htmlFor={selectId}>{label}</label>
-      <select id={selectId} {...props} />
+      <label htmlFor={selectId}>
+        {label}
+        {required && (
+          <span className="required-mark" aria-hidden="true">
+            {' '}
+            *
+          </span>
+        )}
+      </label>
+      <select id={selectId} required={required} {...props} />
     </div>
   )
 }

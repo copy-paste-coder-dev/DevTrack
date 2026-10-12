@@ -1020,13 +1020,13 @@
 .login-story > .brand {
   margin-bottom: 65px;
 }
-.login-story h1 {
+.login-story-title {
   font-size: 43px;
   letter-spacing: -1.8px;
   line-height: 1.2;
   margin-bottom: 18px;
 }
-.login-story h1 > span {
+.login-story-title > span {
   color: var(--color-primary);
 }
 .login-story > div > p {
@@ -1141,7 +1141,7 @@
   font-size: 8px;
   letter-spacing: 1px;
 }
-.login-panel h2 {
+.login-title {
   font-size: 24px;
   letter-spacing: -0.9px;
 }
@@ -1278,9 +1278,6 @@
   .stats-grid {
     grid-template-columns: repeat(3, minmax(0, 1fr));
   }
-  .stats-grid > .stat-card:nth-last-child(-n + 2) {
-    display: none;
-  }
   .dashboard-grid {
     grid-template-columns: 1fr;
   }
@@ -1303,7 +1300,7 @@
   .login-layout {
     gap: 50px;
   }
-  .login-story h1 {
+  .login-story-title {
     font-size: 35px;
   }
   .login-panel {
@@ -1470,9 +1467,6 @@
     width: 100%;
     grid-template-columns: 1fr;
   }
-  .day-context > .card:first-child {
-    display: none;
-  }
   .day-summary {
     padding: 20px;
   }
@@ -1624,7 +1618,7 @@
     display: block;
     margin-bottom: 30px;
   }
-  .login-panel h2 {
+  .login-title {
     font-size: 24px;
   }
   .login-panel > .sample-badge {

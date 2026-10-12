@@ -18,12 +18,22 @@ test('app routes render and navigation works without runtime errors', async ({ p
   expect(errors).toEqual([])
 })
 
-for (const width of [390, 430, 768, 1024, 1440]) {
-  test(`shell fits a ${width}px viewport`, async ({ page }) => {
-    await page.setViewportSize({ width, height: 960 })
+for (const viewport of [
+  { width: 390, height: 844 },
+  { width: 430, height: 932 },
+  { width: 768, height: 1024 },
+  { width: 1024, height: 768 },
+  { width: 1440, height: 900 },
+  { width: 1920, height: 1080 },
+]) {
+  test(`screens and modal fit a ${viewport.width}x${viewport.height} viewport`, async ({
+    page,
+  }) => {
+    const { width, height } = viewport
+    await page.setViewportSize(viewport)
     for (const route of ['/app', '/app/calendar', '/app/settings', '/login']) {
       await page.goto(route)
-      await expect(page.getByRole('main')).toBeVisible()
+      await expect(page.getByRole('heading', { level: 1 })).toBeVisible()
       expect(await page.evaluate(() => document.documentElement.scrollWidth <= innerWidth)).toBe(
         true,
       )
@@ -34,5 +44,30 @@ for (const width of [390, 430, 768, 1024, 1440]) {
         fullPage: true,
       })
     }
+    await page.goto('/app')
+    await expect(page.locator('.stat-card')).toHaveCount(5)
+    for (const card of await page.locator('.stat-card').all()) await expect(card).toBeVisible()
+    if (width < 701) {
+      await expect(page.locator('.sidebar')).not.toBeVisible()
+      await expect(page.getByRole('navigation', { name: 'Mobile navigation' })).toBeInViewport()
+      const addBox = await page
+        .getByRole('button', { name: 'Add activity', exact: true })
+        .boundingBox()
+      const statsBox = await page.locator('.stats-grid').boundingBox()
+      expect(addBox!.width).toBeGreaterThan(width - 60)
+      expect(addBox!.y).toBeGreaterThan(statsBox!.y + statsBox!.height)
+    }
+    await page.getByRole('button', { name: 'Add activity', exact: true }).click()
+    const dialog = page.getByRole('dialog')
+    const box = await dialog.boundingBox()
+    expect(box!.x).toBeGreaterThanOrEqual(0)
+    expect(box!.y).toBeGreaterThanOrEqual(0)
+    expect(box!.width).toBeLessThanOrEqual(width)
+    expect(box!.height).toBeLessThanOrEqual(height)
+    await page.getByRole('button', { name: 'Save activity' }).scrollIntoViewIfNeeded()
+    await expect(page.getByRole('button', { name: 'Save activity' })).toBeInViewport()
+    await page.screenshot({ path: `artifacts/screenshots/dialog-${width}.png` })
+    await page.keyboard.press('Escape')
+    await expect(dialog).not.toBeVisible()
   })
 }

@@ -1,16 +1,22 @@
 import { CalendarClock } from 'lucide-react'
 import { Button } from './Button'
 
-export function EmptyState({ onAdd }: { onAdd: () => void }) {
+export function EmptyState({
+  onAdd,
+  title = 'No activities logged for this day.',
+}: {
+  onAdd: () => void
+  title?: string
+}) {
   return (
     <div className="empty-state">
       <span className="empty-icon">
         <CalendarClock size={26} />
       </span>
-      <h3>A fresh page for your day</h3>
-      <p>No sample activities on this date. Preview an activity to see how logging will feel.</p>
+      <h3>{title}</h3>
+      <p>Your workday starts at 09:00. Make room for your first block of focused work.</p>
       <Button variant="secondary" onClick={onAdd}>
-        Preview an activity
+        Log first activity
       </Button>
     </div>
   )

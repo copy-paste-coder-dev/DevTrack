@@ -14,15 +14,20 @@ import {
 } from 'date-fns'
 import { ChevronLeft, ChevronRight } from 'lucide-react'
 import { Button } from '../../../components/ui/Button'
-import { fixtureDays } from '../../activities/data/demo'
 import { toDateKey } from '../../../utils/date'
 
 interface MonthCalendarProps {
   selected: Date
   onSelect: (date: Date) => void
   expanded?: boolean
+  activityDates: Readonly<Record<string, string>>
 }
-export function MonthCalendar({ selected, onSelect, expanded = false }: MonthCalendarProps) {
+export function MonthCalendar({
+  selected,
+  onSelect,
+  expanded = false,
+  activityDates,
+}: MonthCalendarProps) {
   const [month, setMonth] = useState(startOfMonth(selected))
   const days = eachDayOfInterval({
     start: startOfWeek(startOfMonth(month), { weekStartsOn: 1 }),
@@ -79,7 +84,7 @@ export function MonthCalendar({ selected, onSelect, expanded = false }: MonthCal
         ))}
         {days.map((day) => {
           const key = toDateKey(day)
-          const hasActivities = fixtureDays.has(key)
+          const hasActivities = Boolean(activityDates[key])
           return (
             <button
               key={key}
@@ -99,7 +104,7 @@ export function MonthCalendar({ selected, onSelect, expanded = false }: MonthCal
                   <i />
                 </span>
               )}
-              {expanded && hasActivities && <span className="day-total">6h 30m</span>}
+              {expanded && hasActivities && <span className="day-total">{activityDates[key]}</span>}
             </button>
           )
         })}

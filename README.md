@@ -24,11 +24,12 @@ React, strict TypeScript, Vite, React Router, Tailwind CSS v4 with its Vite plug
 src/app/                  Central router and providers
 src/components/ui/        Small accessible primitives
 src/components/layout/    App shell, branding, page container
-src/components/feedback/  Error fallback and boundary
+src/components/feedback/  Error fallback, retry states and skeletons
 src/features/activities/  Activity screens and foundational types
 src/features/calendar/    Calendar screen
 src/features/settings/    Settings screen
 src/firebase/             Configuration and service factories
+src/mocks/                Typed activity, calendar, user and settings fixtures
 src/styles/               Design tokens and global styling
 src/utils/                Local date formatting helpers
 ```
@@ -67,13 +68,15 @@ TypeScript is pinned to the supported 6.x line because typescript-eslint does no
 ## Phase 1 preview
 
 - `/app`: five summary cards, sample activity timeline, mini calendar, workday summary and date navigation.
-- `/app/calendar`: navigable month, keyboard day selection, selected-day list and empty-day state.
+- `/app/calendar`: navigable month, keyboard day selection, selected-day list, empty-day state and Month/Week/Day tabs (Week and Day are roadmap placeholders).
 - `/app/settings`: editable work-hours controls, activity-type switches, custom-category preview and reset.
 - `/login`: Google/GitHub/email sign-in presentation and a link to the sample workspace.
-- Add/edit dialogs validate a name and a same-day time range. Save/update/delete preview actions show a toast and leave the sample timeline intact. Native dialogs support Escape, modal keyboard focus and focus restoration.
+- Add/edit dialogs share `ActivityForm`, validate required fields and show the future automatic-start-time hint. Save/update/delete preview actions show a toast and leave the sample timeline intact. Native dialogs support Escape, modal keyboard focus, internal scrolling and focus restoration.
 
-The default sample day is **Monday, October 12, 2026**, matching the date in the brief (the collage's weekday was inconsistent). October 9 and 13 reuse the same fixture to demonstrate populated day selection. Other dates are empty. “Today” returns to the fixed sample day in this UI preview. Totals are fixture values, not production calculations: 6h 30m total, 30m break, 6h work, four completed activities, one in progress and one on hold. Settings reset on leaving the page and do not alter fixture data.
+The default sample day is **Monday, October 12, 2026**, matching the date in the brief (the collage's weekday was inconsistent). It shows six activities: 6h 30m logged, 30m break, 6h work, four completed, one in progress and one on hold. October 13 is a distinct light day with two activities and 1h 30m logged. October 9 demonstrates a long task name and an eight-hour activity. Other dates are empty. “Today” returns to the fixed sample day in this UI preview. Totals are fixture values, not production calculations. Settings reset on leaving the page and do not alter fixture data.
 
-The responsive design follows the supplied visual language with restrained glow. At smaller sizes, summary cards reduce to three, navigation moves to the bottom, and the timeline takes priority. The login illustration is a lightweight CSS/code composition rather than a new raster asset. Statistics/week/day calendar modes from the collage are intentionally not shown because real reports and alternate calendar logic are later scope.
+The responsive design follows the supplied visual language with restrained glow. All five summary cards remain visible at smaller sizes. Mobile layouts show a profile avatar, bottom navigation, a full-width Add Activity button after stats, then timeline, mini calendar and day summary. The login illustration is a lightweight CSS/code composition. Real statistics and alternate calendar logic remain later scope.
 
-Chrome tests capture screenshots in ignored `artifacts/screenshots/` and verify all screens at 390, 430, 768, 1024 and 1440px. See [implementation status and pending work](docs/PROGRESS.md) for the complete handoff.
+For deterministic state previews, append `?preview=loading` or `?preview=error` to `/app`, `/app/calendar` or `/app/settings`. Try Again restores the normal mock view. These states do not simulate network traffic or write data.
+
+Chrome tests capture screenshots in ignored `artifacts/screenshots/` and verify all screens at 390×844, 430×932, 768×1024, 1024×768, 1440×900 and 1920×1080. See the [detailed Phase 1 report](docs/PHASE_1_REPORT.md) and [implementation status and pending work](docs/PROGRESS.md) for the handoff.

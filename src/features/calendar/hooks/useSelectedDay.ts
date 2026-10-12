@@ -1,7 +1,7 @@
 import { useSearchParams } from 'react-router-dom'
 import { useState } from 'react'
 import { isValid, parseISO } from 'date-fns'
-import { demoDateKey } from '../../activities/data/demo'
+import { demoDateKey } from '../../../mocks/activities.mock'
 import { toDateKey } from '../../../utils/date'
 
 export function useSelectedDay() {

@@ -1,4 +1,4 @@
-import { statusMeta } from '../data/demo'
+import { statusMeta } from '../config/presentation'
 import type { ActivityStatus } from '../types/activity'
 
 export function StatusBadge({ status }: { status: ActivityStatus }) {

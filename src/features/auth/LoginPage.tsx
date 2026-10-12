@@ -21,10 +21,10 @@ export function LoginPage() {
           <Brand />
           <div>
             <span className="eyebrow">LESS FRICTION. MORE FLOW.</span>
-            <h1>
+            <h2 className="login-story-title">
               Your work deserves
               <br />a little <span>clarity.</span>
-            </h1>
+            </h2>
             <p>
               A simple home for your development day.
               <br />
@@ -72,7 +72,7 @@ export function LoginPage() {
             <Brand />
           </span>
           <span className="sample-badge">SIGN-IN PREVIEW</span>
-          <h2>Welcome to your flow.</h2>
+          <h1 className="login-title">Welcome to your flow.</h1>
           <p>A clearer day starts here.</p>
           <div className="login-buttons">
             <Button variant="secondary" onClick={previewLogin}>
@@ -101,6 +101,7 @@ export function LoginPage() {
             <br />
             No account needed for this preview.
           </p>
+          <p className="login-security-note">Preview only. No credentials are collected or sent.</p>
           <span className="login-tagline">Track your work. Improve your day.</span>
         </section>
       </div>
