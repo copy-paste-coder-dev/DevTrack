@@ -4,7 +4,7 @@ A small calendar-based developer activity tracker. Dark navy surfaces, restraine
 
 ## Setup
 
-Requires Node.js 22.12+ (Node 24 recommended) and npm.
+Requires Node.js 24+ and npm. The Firebase tests use Node's built-in TypeScript support.
 
 ```sh
 npm install
@@ -49,8 +49,8 @@ Official setup references: [Firebase web setup](https://firebase.google.com/docs
 
 ## Phase plan
 
-- Phase 0: foundation, tooling, routing, theme, UI primitives, Firebase factories and documentation.
-- Phase 1: polished UI based on the supplied collage, using clearly identified sample data; responsive dashboard, calendar, settings, activity dialog and login preview.
+- Phase 0 (complete): foundation, tooling, routing, theme, UI primitives, Firebase factories and documentation.
+- Phase 1 (complete): polished UI based on the supplied collage, using clearly identified sample data; responsive dashboard, calendar, settings, activity dialogs and login preview.
 - Phase 2: authentication, protected routes and provider configuration.
 - Later: Firestore models/security rules, activity CRUD, work preferences, scheduling defaults, overlap validation and real summaries.
 
@@ -61,3 +61,19 @@ No authentication, Firestore CRUD, persisted settings, activity scheduling or an
 TypeScript is pinned to the supported 6.x line because typescript-eslint does not yet support TypeScript 7. Firebase's Node-only gRPC dependency is overridden to a patched 1.x version (>=1.13.6) to address GHSA-m9gg-hp2v-232j and GHSA-f596-whhp-79r4; the web application uses Firebase's browser implementation. Revisit the override when Firebase updates its own dependency.
 
 `npm test` checks Firebase configuration and SDK initialization without backend access. `npm run test:e2e` checks routes and responsive layouts using locally installed Google Chrome. To use bundled Chromium elsewhere, remove `channel: 'chrome'` in `playwright.config.ts` and run `npx playwright install chromium`.
+
+`npm run format` formats source and documentation; `npm run format:check` verifies it. The lockfile pins the exact dependency versions. UI routes are loaded on demand to keep the initial bundle small.
+
+## Phase 1 preview
+
+- `/app`: five summary cards, sample activity timeline, mini calendar, workday summary and date navigation.
+- `/app/calendar`: navigable month, keyboard day selection, selected-day list and empty-day state.
+- `/app/settings`: editable work-hours controls, activity-type switches, custom-category preview and reset.
+- `/login`: Google/GitHub/email sign-in presentation and a link to the sample workspace.
+- Add/edit dialogs validate a name and a same-day time range. Save/update/delete preview actions show a toast and leave the sample timeline intact. Native dialogs support Escape, modal keyboard focus and focus restoration.
+
+The default sample day is **Monday, October 12, 2026**, matching the date in the brief (the collage's weekday was inconsistent). October 9 and 13 reuse the same fixture to demonstrate populated day selection. Other dates are empty. “Today” returns to the fixed sample day in this UI preview. Totals are fixture values, not production calculations: 6h 30m total, 30m break, 6h work, four completed activities, one in progress and one on hold. Settings reset on leaving the page and do not alter fixture data.
+
+The responsive design follows the supplied visual language with restrained glow. At smaller sizes, summary cards reduce to three, navigation moves to the bottom, and the timeline takes priority. The login illustration is a lightweight CSS/code composition rather than a new raster asset. Statistics/week/day calendar modes from the collage are intentionally not shown because real reports and alternate calendar logic are later scope.
+
+Chrome tests capture screenshots in ignored `artifacts/screenshots/` and verify all screens at 390, 430, 768, 1024 and 1440px. See [implementation status and pending work](docs/PROGRESS.md) for the complete handoff.
