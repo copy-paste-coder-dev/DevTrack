@@ -1,9 +1,12 @@
 import { FlaskConical } from 'lucide-react'
-import { NavLink } from 'react-router-dom'
 import { Brand } from './Brand'
-import { mockUser } from '../../mocks/user.mock'
+import { useAuth } from '../../features/auth/hooks/useAuth'
+import { UserAvatar } from '../../features/auth/components/UserAvatar'
+import { LogoutButton } from '../../features/auth/components/LogoutButton'
+import { getUserDisplayName } from '../../features/auth/utils/userMapper'
 
 export function TopHeader() {
+  const { user } = useAuth()
   return (
     <header className="topbar">
       <span className="topbar-label">
@@ -11,19 +14,35 @@ export function TopHeader() {
       </span>
       <Brand />
       <div className="header-account">
-        <NavLink to="/login" className="workspace-status">
+        <span className="workspace-status">
           <FlaskConical size={13} />
           <span>
-            UI preview <span className="preview-detail">· Changes are not saved</span>
+            Sample activities <span className="preview-detail">· Changes are not saved</span>
           </span>
-        </NavLink>
-        <span
-          className="avatar mobile-avatar"
-          role="img"
-          aria-label={`Sample profile: ${mockUser.name}`}
-        >
-          {mockUser.initials}
         </span>
+        <details
+          className="account-menu"
+          onKeyDown={(event) => {
+            if (event.key === 'Escape') {
+              event.currentTarget.removeAttribute('open')
+              event.currentTarget.querySelector('summary')?.focus()
+            }
+          }}
+        >
+          <summary aria-label="Open account menu">
+            <UserAvatar
+              displayName={user?.displayName ?? null}
+              email={user?.email ?? null}
+              photoURL={user?.photoURL ?? null}
+              size="small"
+            />
+          </summary>
+          <div className="account-menu-panel">
+            <strong>{getUserDisplayName(user?.displayName ?? null)}</strong>
+            <span>{user?.email ?? 'No email available'}</span>
+            <LogoutButton />
+          </div>
+        </details>
       </div>
     </header>
   )

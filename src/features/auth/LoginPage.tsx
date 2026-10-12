@@ -1,21 +1,29 @@
-import { ArrowLeft, ArrowRight, Code2, GitBranch, Mail, Terminal } from 'lucide-react'
-import { Link } from 'react-router-dom'
+import { useState } from 'react'
+import { Code2, GitBranch, Mail, Terminal } from 'lucide-react'
 import { toast } from 'sonner'
 import { Brand } from '../../components/layout/Brand'
 import { Button } from '../../components/ui/Button'
+import { useAuth } from './hooks/useAuth'
+import { getAuthErrorMessage } from './utils/authError'
 
 export function LoginPage() {
-  function previewLogin() {
-    toast.info('Sign-in arrives in Phase 2', {
-      description: 'You can explore the sample workspace without signing in.',
-    })
+  const { signInWithGoogle, isSigningIn, initializationError, retryInitialization } = useAuth()
+  const [error, setError] = useState<string | null>(null)
+  async function signIn() {
+    setError(null)
+    try {
+      const result = await signInWithGoogle()
+      if (result.profileSyncFailed)
+        toast.warning("Signed in successfully, but we couldn't sync your profile.")
+      else toast.success('Signed in successfully')
+    } catch (cause) {
+      const message = getAuthErrorMessage(cause)
+      setError(message)
+      toast.error('Could not sign in', { description: message })
+    }
   }
   return (
     <main className="login-page">
-      <Link to="/app" className="login-back">
-        <ArrowLeft size={15} />
-        Back to workspace
-      </Link>
       <div className="login-layout">
         <section className="login-story">
           <Brand />
@@ -71,37 +79,53 @@ export function LoginPage() {
           <span className="login-brand">
             <Brand />
           </span>
-          <span className="sample-badge">SIGN-IN PREVIEW</span>
+          <span className="sample-badge">YOUR DEVTRACK ACCOUNT</span>
           <h1 className="login-title">Welcome to your flow.</h1>
           <p>A clearer day starts here.</p>
           <div className="login-buttons">
-            <Button variant="secondary" onClick={previewLogin}>
-              <span className="google-mark">G</span>Continue with Google
+            <Button
+              variant="secondary"
+              onClick={signIn}
+              loading={isSigningIn}
+              disabled={Boolean(initializationError)}
+            >
+              {!isSigningIn && (
+                <span className="google-mark" aria-hidden="true">
+                  G
+                </span>
+              )}
+              {isSigningIn ? 'Signing in…' : 'Continue with Google'}
             </Button>
-            <Button variant="secondary" onClick={previewLogin}>
+            <Button variant="secondary" disabled>
               <GitBranch size={19} />
               Continue with GitHub
+              <span className="auth-soon">Soon</span>
             </Button>
             <div className="login-divider">
               <span />
               or
               <span />
             </div>
-            <Button variant="secondary" onClick={previewLogin}>
+            <Button variant="secondary" disabled>
               <Mail size={18} />
               Continue with email
+              <span className="auth-soon">Soon</span>
             </Button>
           </div>
-          <Link className="button button-primary explore-button" to="/app">
-            Explore sample workspace
-            <ArrowRight size={17} />
-          </Link>
-          <p className="login-caption">
-            Authentication will be connected in Phase 2.
-            <br />
-            No account needed for this preview.
+          {(error || initializationError) && (
+            <div className="auth-error" role="alert">
+              <p>{error || initializationError}</p>
+              {initializationError && (
+                <Button variant="secondary" onClick={retryInitialization}>
+                  Try again
+                </Button>
+              )}
+            </div>
+          )}
+          <p className="login-caption">Sign in to your personal developer workspace.</p>
+          <p className="login-security-note">
+            Google manages your sign-in. DevTrack never sees your Google password.
           </p>
-          <p className="login-security-note">Preview only. No credentials are collected or sent.</p>
           <span className="login-tagline">Track your work. Improve your day.</span>
         </section>
       </div>

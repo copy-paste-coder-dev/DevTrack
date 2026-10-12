@@ -32,6 +32,8 @@ for (const viewport of [
     const { width, height } = viewport
     await page.setViewportSize(viewport)
     for (const route of ['/app', '/app/calendar', '/app/settings', '/login']) {
+      if (route === '/login')
+        await page.evaluate(() => localStorage.setItem('devtrack-e2e-session', 'null'))
       await page.goto(route)
       await expect(page.getByRole('heading', { level: 1 })).toBeVisible()
       expect(await page.evaluate(() => document.documentElement.scrollWidth <= innerWidth)).toBe(
@@ -44,6 +46,7 @@ for (const viewport of [
         fullPage: true,
       })
     }
+    await page.evaluate(() => localStorage.removeItem('devtrack-e2e-session'))
     await page.goto('/app')
     await expect(page.locator('.stat-card')).toHaveCount(5)
     for (const card of await page.locator('.stat-card').all()) await expect(card).toBeVisible()

@@ -110,11 +110,14 @@ test('settings controls, custom categories and reset work without persistence', 
   await expect(page.getByRole('switch', { name: 'Enable Architecture' })).toHaveCount(0)
 })
 
-test('login controls disclose preview status and offer workspace access', async ({ page }) => {
+test('login disables future providers and signs in through the auth abstraction', async ({
+  page,
+}) => {
+  await page.addInitScript(() => localStorage.setItem('devtrack-e2e-session', 'null'))
   await page.goto('/login')
+  await expect(page.getByRole('button', { name: /Continue with GitHub/ })).toBeDisabled()
+  await expect(page.getByRole('button', { name: /Continue with email/ })).toBeDisabled()
   await page.getByRole('button', { name: 'Continue with Google' }).click()
-  await expect(page.getByText('Sign-in arrives in Phase 2')).toBeVisible()
-  await page.getByRole('link', { name: 'Explore sample workspace' }).click()
   await expect(page).toHaveURL(/\/app$/)
 })
 
@@ -219,5 +222,6 @@ test('all-disabled activity types show an empty message and time format remains 
   await expect(page.getByText('No active activity types.')).not.toBeVisible()
   await expect(page.getByLabel('Time display format')).toHaveValue('24')
   await page.getByRole('button', { name: 'Logout', exact: true }).click()
-  await expect(page.getByText('Logout will be connected in Phase 2')).toBeVisible()
+  await expect(page).toHaveURL(/\/login/)
+  await expect(page.getByText('Signed out successfully')).toBeVisible()
 })

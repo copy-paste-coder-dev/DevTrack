@@ -1,0 +1,96 @@
+.auth-loading-screen {
+  min-height: 100dvh;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  gap: 34px;
+  padding: 24px;
+}
+.auth-loading-screen .loading {
+  font-size: 13px;
+  color: var(--color-text-secondary);
+}
+.auth-error {
+  margin-top: 20px;
+  padding: 14px;
+  border: 1px solid #f2799733;
+  border-radius: var(--radius-sm);
+  background: #f2799708;
+  font-size: 12px;
+  line-height: 1.6;
+}
+.auth-error p {
+  color: var(--color-danger);
+}
+.auth-error .button {
+  margin-top: 12px;
+}
+.auth-soon {
+  font-size: 9px;
+  color: var(--color-text-muted);
+}
+.user-avatar {
+  overflow: hidden;
+  flex-shrink: 0;
+}
+.user-avatar img {
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+}
+.user-avatar-small {
+  width: 29px;
+  height: 29px;
+  font-size: 10px;
+}
+.profile strong {
+  overflow-wrap: anywhere;
+}
+.account-menu {
+  display: none;
+  position: relative;
+}
+.account-menu summary {
+  list-style: none;
+  cursor: pointer;
+  display: flex;
+  border-radius: 50%;
+}
+.account-menu summary::-webkit-details-marker {
+  display: none;
+}
+.account-menu summary:focus-visible {
+  outline: 2px solid var(--color-primary);
+  outline-offset: 4px;
+}
+.account-menu-panel {
+  position: absolute;
+  right: 0;
+  top: calc(100% + 14px);
+  width: min(270px, calc(100vw - 40px));
+  padding: 18px;
+  background: var(--color-surface);
+  border: 1px solid var(--color-border);
+  border-radius: var(--radius-md);
+  box-shadow: var(--shadow-card);
+  z-index: 30;
+  font-size: 12px;
+  display: grid;
+  gap: 9px;
+  overflow-wrap: anywhere;
+}
+.account-menu-panel > span {
+  color: var(--color-text-secondary);
+  font-size: 11px;
+}
+.account-menu-panel .button {
+  justify-content: flex-start;
+  margin-top: 8px;
+  min-height: 42px;
+}
+@media (max-width: 700px) {
+  .account-menu {
+    display: block;
+  }
+}

@@ -24,12 +24,22 @@ Validation: lint and production TypeScript/Vite build pass; two Firebase foundat
 
 PHASE 1 STATUS: COMPLETE
 
+## Phase 2 implementation
+
+Real Google popup authentication, a central session provider/hook, protected/guest/root routes, safe return paths, initial loading, friendly errors, separate action loading, authenticated sidebar/mobile avatar and real logout are implemented. User profiles use users/{uid}, transactions and server audit timestamps; createdAt is preserved. Owner-only profile rules and Firebase deployment configuration are ready. No activity CRUD/settings persistence was added.
+
+Local checks pass: lint/build, seven native tests, 27 full browser tests plus the added focused offline test. Test authentication is supplied by an isolated local-only adapter; it is excluded from ordinary dev/production and cannot be used in production builds. These checks do not verify live Google/Firebase behavior.
+
+All six local Firebase settings are present and ignored. Google/domain setup, rule publishing/enforcement, real popup/profile creation, repeated-login timestamps, persistent refresh and logout verification remain pending. Computer Use stopped because Chrome's URL could not be reliably identified. No live success or remote setup is claimed. The official Firebase plugin was suggested; connection is not confirmed. See [the complete 22-part report](PHASE_2_REPORT.md) and README for setup steps.
+
+PHASE 2 STATUS: INCOMPLETE
+
 ## Pending details for later phases
 
-1. **Phase 2 — authentication:** supply a Firebase project and local environment configuration, enable chosen providers/authorized domains, implement sign-in/sign-out, auth state and protected routes. Profile, login and logout currently present mock interactions.
-2. **Phase 3 — Firestore:** define user-scoped documents and Timestamp/timezone policy, security rules and emulator coverage, then connect queries and real activity create/edit/delete. Adapt service data to the existing typed presentation props.
-3. **Persistent preferences:** store work hours, time format and enabled/custom types; apply preferences consistently across screens. Current controls are local previews that reset after leaving settings.
-4. **Phase 4 — business rules:** first/next start defaults, overlap/end-order validation, duration persistence, break policy and accurate daily/status summaries. The future-start helper is presentation only.
+1. **Finish Phase 2 verification:** enable/confirm Google and authorized domains, publish/validate the owner profile rules, then test real sign-in/profile/relogin/refresh/logout. Real Google authentication code is implemented; activity previews still use mock data.
+2. **Phase 3 — Firestore activities:** define user-scoped activity documents and Timestamp/timezone policy, activity rules and emulator coverage, then connect queries and real activity create/edit/delete. Adapt service data to the existing typed presentation props.
+3. **Phase 5 — persistent preferences:** store work hours, time format and enabled/custom types; apply preferences consistently across screens. Current controls are local previews that reset after leaving settings.
+4. **Phase 4 — business rules / Phase 6 summaries:** first/next start defaults, overlap/end-order validation, duration persistence, break policy and accurate daily/status summaries. The future-start helper is presentation only.
 5. **Optional later scope:** functional Week/Day layouts, statistics/reports, integrations, offline behavior and deployment. Week/Day placeholders satisfy the current Phase 1 specification.
 
-No blockers remain for the specified mock/local-state UI scope. Production accounts, persistence and business rules are intentionally deferred. Installed Chrome was verified; other browsers, physical devices and a live Firebase backend were not tested. No deployment or remote push was performed.
+No blockers remain for Phase 0/1. Phase 2 code is implemented; its required live verification is pending. Installed Chrome UI tests pass; physical devices, other browsers and live Firebase behavior are unverified. No deployment or remote push was performed.

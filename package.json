@@ -12,7 +12,7 @@
     "lint": "eslint . --max-warnings 0",
     "preview": "vite preview --host 127.0.0.1",
     "typecheck": "tsc -b --pretty false",
-    "test": "node --test tests/firebase.test.mjs",
+    "test": "node --test tests/*.test.mjs",
     "test:e2e": "playwright test",
     "format": "prettier --write .",
     "format:check": "prettier --check ."
