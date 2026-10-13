@@ -1,6 +1,6 @@
 # Phase 2 authentication report
 
-Date: October 12, 2026. Implementation and local verification are finished. **Live Firebase project setup and end-to-end verification remain pending**, so this phase is not marked complete.
+Updated: October 13, 2026. Implementation, local checks and the required live authentication/profile checks are complete. Implementation checkpoint: `34bef16`; live verification was completed alongside Phase 3.
 
 ## 1. Phase 0/1 auth audit
 
@@ -8,7 +8,7 @@ The existing modular Firebase singleton factories and six-variable validation we
 
 ## 2. Authentication architecture
 
-UI → useAuth/AuthContext → AuthProvider → auth.service → Firebase Auth. Profile writes are separate in userProfile.service. UI receives only AuthUser (`uid`, nullable displayName/email/photoURL), never SDK User/credentials. Routing owns navigation; services/provider do not navigate. Activity data and settings remain mocked.
+UI → useAuth/AuthContext → AuthProvider → auth.service → Firebase Auth. Profile writes are separate in userProfile.service. UI receives only AuthUser (`uid`, nullable displayName/email/photoURL), never SDK User/credentials. Routing owns navigation; services/provider do not navigate. Activity data and settings were mocked at the Phase 2 checkpoint; Phase 3 replaces activity persistence, while settings remain a preview.
 
 ## 3. Auth service
 
@@ -32,11 +32,11 @@ Login waits for session initialization. Existing authenticated sessions redirect
 
 ## 8. Google authentication
 
-Real Firebase popup code is implemented. Login shows button-level loading, prevents repeated submissions, maps common popup/network/domain/account/provider errors, handles offline feedback and supports retry. GitHub/email are disabled with Soon labels. Anonymous sample-workspace links are removed. **Live Google OAuth has not yet been confirmed.**
+Real Firebase popup code is implemented. Login shows button-level loading, prevents repeated submissions, maps common popup/network/domain/account/provider errors, handles offline feedback and supports retry. GitHub/email are disabled with Soon labels. Anonymous sample-workspace links are removed. The user confirmed successful live Google re-login on October 13; the remote Google provider is enabled and localhost/127.0.0.1 are authorized.
 
 ## 9. Firestore user profile
 
-The service reads users/{uid}; sync uses a Firestore transaction to create or merge. Creation includes UID, display name/email/photo, provider google, and server timestamps createdAt/updatedAt/lastLoginAt. Updates omit UID/provider/createdAt, preserving creation time even with concurrent first logins. Pure payload tests verify these properties; actual backend writes are still unverified.
+The service reads users/{uid}; sync uses a Firestore transaction to create or merge. Creation includes UID, display name/email/photo, provider google, and server timestamps createdAt/updatedAt/lastLoginAt. Updates omit UID/provider/createdAt, preserving creation time even with concurrent first logins. Pure payload and emulator checks verify creation/update rules. Live backend reads found one matching account profile; re-login preserved its October 12 createdAt and advanced both updatedAt and lastLoginAt together on October 13. A fresh second Google account was not created for testing.
 
 ## 10. Sidebar/mobile profile
 
@@ -44,11 +44,11 @@ Both consume useAuth and the shared UserAvatar/name helpers. The sidebar shows r
 
 ## 11. Logout
 
-Desktop/mobile share LogoutButton. Official Firebase signOut is called through the service/provider; guards react to the confirmed null auth event. Buttons disable/show loading during the operation. Errors show friendly feedback while preserving session state. Tests verify these UI behaviors using a synthetic service; live Firebase logout remains pending.
+Desktop/mobile share LogoutButton. Official Firebase signOut is called through the service/provider; guards react to the confirmed null auth event. Buttons disable/show loading during the operation. Errors show friendly feedback while preserving session state. Synthetic tests cover both controls. The user confirmed live logout redirects /app to Login, followed by successful Google re-login and Calendar refresh/session restoration.
 
 ## 12. Firebase rules
 
-firestore.rules permits only authenticated owner get/create/update of users/{uid}, validates the exact profile fields, requires server audit timestamps and preserves createdAt. Lists/deletes, activities/settings/subcollections and all other paths are denied. firebase.json references these rules without hardcoding a project. **Publishing and validating them in the development project is pending.** No permissive remote rules are assumed to have been changed.
+firestore.rules permits only authenticated owner get/create/update of users/{uid}, validates the exact profile fields, requires server audit timestamps and preserves createdAt. Profile list/delete and settings/other paths are denied. The Phase 3 extension also permits owner activity CRUD. These reviewed rules were deployed to dev-track-46323 on October 13; the downloaded released rules match the repository exactly. Local emulator checks and remote Rules API evaluations verify profile ownership and denied profile deletion/settings access. Unauthenticated live profile reads were denied.
 
 ## 13. Files created
 
@@ -89,20 +89,11 @@ None added or removed. Existing Firebase SDK supplies Auth/Firestore, native Rea
 
 ## 16. Manual results and remaining blockers
 
-All six required Firebase environment settings are present, checked without printing their values. The real development server is running on http://127.0.0.1:5173. User is configuring the development project and requested help with Google/domains, Firestore/rules and sign-in errors. No live success result has been received yet.
+No completion blocker remains. All six local web settings identify dev-track-46323. Firebase Admin configuration reads confirm Google is enabled and both localhost and 127.0.0.1 are authorized. The default Standard/Native Firestore database exists. CLI login initially failed with expired credentials; the user completed Google reauthentication, enabling rules deployment and backend verification.
 
-Browser connector inventory was empty. Computer Use found Chrome on the Firebase console, then stopped for this turn because it could not identify the current browser URL reliably enough to enforce its policy. No further UI actions were issued. The [computer-use skill](<C:/Users/Shajith Ali S/.codex/plugins/cache/openai-bundled/computer-use/26.1007.21434/skills/computer-use/SKILL.md>) references [guidance](<C:/Users/Shajith Ali S/.codex/plugins/cache/openai-bundled/computer-use/26.1007.21434/docs/guidance.md>) stating: "Do not automate user authentication dialogs." Google account selection is therefore a user interaction. No Firebase/gcloud CLI is installed. An official Firebase plugin was discovered and suggested, but installation/connection is not confirmed.
+The user confirmed live logout protection for /app, successful Google re-login, Calendar refresh/session restoration and no new app/Firebase Console errors. Dashboard refresh also passed during real activity CRUD. Backend reads corroborated one matching account profile and immutable createdAt with refreshed server login/update audit fields. This uses an existing Google account; a new-user OAuth/profile-creation flow was not separately repeated.
 
-Remaining blockers to completion:
-
-1. Confirm Google provider enablement and localhost/127.0.0.1 authorized domains in the development project.
-2. Create/confirm Firestore, publish the reviewed rules and verify owner/non-owner access enforcement.
-3. Complete real Google popup sign-in and verify the authenticated identity appears.
-4. Verify first-login users/{uid}, server audit fields, and second-login creation-time preservation with no duplicate profile.
-5. Verify real Firebase session restoration on dashboard/calendar/settings refresh and real logout blocking protected routes.
-6. Inspect the live flow for auth-related browser errors/warnings that prevent operation.
-
-Instructions and common error remedies are in README. No remote configuration change, rule deployment or live test success is claimed.
+The [computer-use skill](<C:/Users/Shajith Ali S/.codex/plugins/cache/openai-bundled/computer-use/26.1007.21434/skills/computer-use/SKILL.md>) references [guidance](<C:/Users/Shajith Ali S/.codex/plugins/cache/openai-bundled/computer-use/26.1007.21434/docs/guidance.md>) stating: "Do not automate user authentication dialogs." The user performed Google authorization and app interactions. Browser automation stopped because it could not determine the Windows browser URL with enough confidence to enforce policy; no further UI actions followed that stop. Live UI results are user-confirmed, while project configuration/profile fields were independently read through authenticated APIs. No passwords, tokens or service-account keys were added to the repository.
 
 ## 17. Lint
 
@@ -122,7 +113,7 @@ Auth browser tests use a synthetic service adapter, selected only by Vite's e2e 
 
 ## 20. Known limitations
 
-Live Firebase checks above remain mandatory. Rules have been reviewed in source, not compiled/tested through a rules emulator or deployed by the agent. Popup-only authentication is implemented; mobile-device redirect fallback, Edge and physical-device OAuth are unverified. Auth loading/profile errors are handled, but activity/settings data is still synthetic. No tokens are manually stored by production application code; synthetic test identity storage exists only in the excluded test adapter.
+Popup-only authentication is implemented; mobile-device redirect fallback, Edge and physical-device OAuth are unverified. Mobile logout and Settings-route refresh have automated coverage; the final live lifecycle check used the desktop app and Calendar. New-account creation and a real second-account isolation session were not separately repeated. Ownership was verified using emulator identities, live guest requests and remote Rules API contexts against the released ruleset. Activity persistence is real after Phase 3; settings remain a preview. No tokens are manually stored by production application code; synthetic test identity storage exists only in the excluded test adapter.
 
 ## 21. Deferred work
 
@@ -136,16 +127,14 @@ Phase 3: real activity CRUD, queries and activity rules. Phase 4: smart start ti
 - [x] Protected/guest/root routes, initial loading and safe return paths.
 - [x] Profile transaction and immutable creation time/server audit payloads.
 - [x] Shared real-user presentation, avatar fallback, desktop/mobile logout.
-- [x] Owner-only profile rules created; activity paths remain denied.
+- [x] Owner-only profile rules deployed; Phase 3 extends owner activity access.
 - [x] Lint/build/unit and local browser checks pass; responsive UI retained.
 - [x] Setup/security/model/test/pending-work documentation updated.
-- [ ] Google/provider/domain configuration confirmed remotely.
-- [ ] Rules published and actual owner/non-owner behavior verified.
-- [ ] Real Google login, profile creation/relogin, session restoration and logout verified.
-- [ ] Completed phase committed after all required live checks pass.
+- [x] Google/provider/domain configuration confirmed remotely.
+- [x] Rules published; owner operations, live guest denial and simulated cross-user evaluation verified.
+- [x] Real Google login, existing profile/relogin, session restoration and logout verified.
+- [x] Completion report prepared after live verification for a separate phase commit.
 
-Follow-up during Phase 3: native browser observation at http://127.0.0.1:5173/app showed the real authenticated account in the shell. No new OAuth popup, profile lifecycle/relogin, refresh or logout test was performed. Full Phase 2 status therefore remains incomplete. Implementation was saved as checkpoint commit `34bef16` before Phase 3 changes. Phase 3 now extends activity rules and data paths; the profile-only descriptions above record the Phase 2 checkpoint.
+Earlier incomplete checkpoints are superseded by the October 13 results above. Implementation was saved as `34bef16`; the local rules suite was added as `82718bf`. Phase 3 extends activity rules and data paths; see [its report](PHASE_3_REPORT.md).
 
-October 13 follow-up: official Firebase CLI is now available in ignored artifacts, but its saved login has expired (HTTP 401). Interactive reauthentication awaits the user's Google authorization. The Phase 3 emulator suite now verifies profile ownership, allowed owner updates, immutable createdAt and denied guest/cross-user/list/delete access. This verifies local rules, not the live Google/profile/logout lifecycle; see [the Phase 3 report](PHASE_3_REPORT.md).
-
-PHASE 2 STATUS: INCOMPLETE
+PHASE 2 STATUS: COMPLETE

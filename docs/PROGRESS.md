@@ -24,15 +24,15 @@ Validation: lint and production TypeScript/Vite build pass; two Firebase foundat
 
 PHASE 1 STATUS: COMPLETE
 
-## Phase 2 implementation
+## Phase 2
 
 Real Google popup authentication, a central session provider/hook, protected/guest/root routes, safe return paths, initial loading, friendly errors, separate action loading, authenticated sidebar/mobile avatar and real logout are implemented. User profiles use users/{uid}, transactions and server audit timestamps; createdAt is preserved. Owner-only profile rules and Firebase deployment configuration are ready. No activity CRUD/settings persistence was added.
 
 Local checks pass: lint/build, seven native tests, 27 full browser tests plus the added focused offline test. Test authentication is supplied by an isolated local-only adapter; it is excluded from ordinary dev/production and cannot be used in production builds. These checks do not verify live Google/Firebase behavior.
 
-All six local Firebase settings are present and ignored. Implementation checkpoint: `34bef16`. During Phase 3, the real authenticated account was observed at /app, confirming an existing session and identity. The full popup/profile/relogin/refresh/logout flow is still unverified. The earlier Computer Use attempt stopped on browser URL detection; the later attempt read Chrome but input recovery failed. The Firebase plugin remains uninstalled/unconnected. See [the complete 22-part report](PHASE_2_REPORT.md) and README for setup steps.
+October 13 live verification completed: Google provider enabled, localhost and 127.0.0.1 authorized, default Firestore database present, reviewed rules deployed. User confirmed real logout protection, Google re-login, Calendar refresh/session restoration and no new Console errors. Backend profile reads confirmed one matching account, preserved createdAt and advanced lastLoginAt/updatedAt. Browser UI checks were performed by the user after Computer Use stopped on URL detection; privileged API reads corroborated configuration and profile data. Emulator identities, live guest requests and remote Rules API contexts verify ownership; no second real Google account was used. Implementation checkpoint: `34bef16`. See [the complete 22-part report](PHASE_2_REPORT.md).
 
-PHASE 2 STATUS: INCOMPLETE
+PHASE 2 STATUS: COMPLETE
 
 ## Phase 3 implementation
 
