@@ -37,7 +37,10 @@ export function CalendarPage() {
             <CalendarDays size={15} />
             Today
           </Button>
-          <Button onClick={() => setDialog({ activity: null })}>
+          <Button
+            disabled={isLoading || Boolean(error)}
+            onClick={() => setDialog({ activity: null })}
+          >
             <Plus size={17} />
             Add activity
           </Button>
@@ -110,6 +113,8 @@ export function CalendarPage() {
               </div>
               <ActivityTimeline
                 activities={activities}
+                dateKey={dateKey}
+                onLogGap={(gap) => setDialog({ activity: null, gap })}
                 onAdd={() => setDialog({ activity: null })}
                 onEdit={(activity) => setDialog({ activity })}
                 onDelete={(activity) => setDialog({ activity, action: 'delete' })}
@@ -124,6 +129,7 @@ export function CalendarPage() {
           key={dialog.activity?.id ?? 'create'}
           {...dialog}
           dateKey={dateKey}
+          activities={activities}
           onClose={() => setDialog(null)}
         />
       )}

@@ -46,11 +46,18 @@ Local validation remains passing: lint/build/format/whitespace checks, 14 native
 
 PHASE 3 STATUS: COMPLETE
 
+## Phase 4
+
+Smart create defaults now use the selected day's latest end or the shared temporary 09:00 preference. End suggests +30 minutes until manually changed; duration previews immediately. A pure time domain drives same-day/minute validation, create/edit overlap prevention with self-exclusion, safe sorting, suggestions and gap detection. The production service checks fresh destination-day data before each create/update, including date moves. Realtime snapshots preserve open drafts. Dashboard/Calendar share exact gap prefills; gaps remain derived and excluded from totals. Latest/middle deletion recomputes suggestions/gaps. Legacy timestamp seconds round suggestions forward and gap boundaries inward.
+
+Validation: 23 native tests, 24 emulator checks (including real production-service CRUD/overlap/date-move/listener validation), a passing full 39-scenario browser suite and six focused smart-timeline scenarios including the reported no-navigation save sequence. Lint/build/format/whitespace checks pass. Responsive regression covers 390–1920px. User confirmed valid saves, conflict display, gap fill, edit rejection, deletion default and Calendar refresh. Development update interruptions were removed from live testing by serving the production build at the same local origin; the user confirmed no unwanted refresh. Final UI evidence is user-confirmed; later read-only probes did not independently corroborate the exact final date/account. See the [29-part report](PHASE_4_REPORT.md) for evidence and limitations.
+
+PHASE 4 STATUS: COMPLETE
+
 ## Pending details for later phases
 
-1. **Phase 4 — business rules:** first/next start defaults, overlap prevention, configured day start, gap detection and advanced time validation. Basic valid-time/duration calculations and daily/status summaries are already implemented in Phase 3.
-2. **Phase 5 — persistent preferences:** store work hours, time format and enabled/custom types; apply preferences consistently across screens. Current controls are local previews that reset after leaving settings.
-3. **Later scope:** functional Week/Day layouts, statistics/reports/export, timers, integrations, teams, AI, advanced offline behavior and hosting deployment. Week/Day placeholders satisfy the Phase 1 specification.
-4. **Additional validation:** real second-account isolation, physical devices, Edge/other browsers and new-account/mobile OAuth flows. Ownership is already tested through the emulator, live guest requests and remote Rules API contexts; these broader checks are not Phase 3 blockers.
+1. **Phase 5 — persistent preferences:** store work hours, time format and enabled/custom types; apply preferences consistently across screens. Current controls are local previews that reset after leaving settings. Smart defaults temporarily use the centralized 09:00 preference.
+2. **Later scope:** functional Week/Day layouts, statistics/reports/export, timers, integrations, teams, AI, advanced offline behavior and hosting deployment. Week/Day placeholders satisfy the Phase 1 specification. Cross-midnight logging, server-enforced overlap concurrency and persisted timezone handling are deferred.
+3. **Additional validation:** real second-account isolation, physical devices, Edge/other browsers and new-account/mobile OAuth flows. Ownership is already tested through the emulator, live guest requests and remote Rules API contexts; these broader checks are not phase completion blockers.
 
-Phases 0–3 are complete. No mandatory Phase 3 work remains. No hosting deployment or remote Git push was performed.
+Phases 0–4 are complete. No mandatory Phase 4 work remains. No hosting deployment or remote Git push was performed. Live test entries remain for the user to keep or remove.

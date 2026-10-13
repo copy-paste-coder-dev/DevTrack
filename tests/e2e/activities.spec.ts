@@ -76,7 +76,7 @@ test('create, refresh, edit date/status/time, calendar markers and delete stay c
 test('save errors preserve values; retry saves once and the next create starts empty', async ({
   page,
 }) => {
-  await emptyStore(page, { mutationError: 'permission-denied', delay: 700 })
+  await emptyStore(page, { mutationError: 'permission-denied', holdMutation: true })
   await page.goto('/app')
   await page.getByRole('button', { name: 'Add activity', exact: true }).click()
   await fill(page, 'Keep my input')
@@ -85,13 +85,20 @@ test('save errors preserve values; retry saves once and the next create starts e
   await expect(page.getByRole('button', { name: 'Close dialog' })).toBeDisabled()
   await page.keyboard.press('Escape')
   await expect(page.getByRole('dialog')).toBeVisible()
+  await page.evaluate(() =>
+    localStorage.setItem(
+      'devtrack-e2e-activity-options',
+      JSON.stringify({ mutationError: 'permission-denied' }),
+    ),
+  )
   await expect(page.getByRole('alert')).toContainText("You don't have permission")
   await expect(page.getByLabel('Task / activity name')).toHaveValue('Keep my input')
   await page.evaluate(() =>
-    localStorage.setItem('devtrack-e2e-activity-options', JSON.stringify({ delay: 700 })),
+    localStorage.setItem('devtrack-e2e-activity-options', JSON.stringify({ holdMutation: true })),
   )
   await page.getByRole('button', { name: 'Save activity' }).click()
   await page.getByLabel('Task / activity name').press('Enter')
+  await page.evaluate(() => localStorage.removeItem('devtrack-e2e-activity-options'))
   await expect(page.getByRole('dialog')).not.toBeVisible()
   await expect(page.locator('.timeline-item')).toHaveCount(1)
   await page.getByRole('button', { name: 'Add activity', exact: true }).click()

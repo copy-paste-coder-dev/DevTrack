@@ -78,7 +78,7 @@ test('document mapper uses ID and Date domain fields, tolerates pending audit fi
   )
   assert.throws(() => mapActivityDocument('bad', { ...payload, startAt: '09:00' }))
 })
-test('service schema and form enforce basic valid same-day times without forbidding overlap', () => {
+test('static schemas validate same-day ranges; external-data overlap checks belong to the domain/service', () => {
   for (const change of [
     { taskName: ' ' },
     { activityType: 'invented' },

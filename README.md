@@ -81,7 +81,7 @@ createdAt          server timestamp, immutable on edit
 updatedAt          server timestamp on create/edit
 ```
 
-Create uses a generated document reference and setDoc. Update changes mutable fields with updateDoc, including dateKey when moving dates; delete uses deleteDoc. Basic validation runs in both the form and service. Date/time construction uses local numeric date components, never a forced UTC string. Invalid/nonexistent dates or local times are rejected. End must follow start within the chosen day. Duration is calculated by one shared utility. Overlap is allowed in Phase 3.
+Create uses a generated document reference and setDoc. Update changes mutable fields with updateDoc, including dateKey when moving dates; delete uses deleteDoc. Basic validation runs in both the form and service. Date/time construction uses local numeric date components, never a forced UTC string. Invalid/nonexistent dates or local times are rejected. End must follow start within the chosen day. Duration and time rules come from the shared activity domain. Phase 4 blocks overlapping creates and edits before mutation.
 
 Dashboard subscribes to the selected day: dateKey equality plus startAt ascending. Its mini calendar subscribes to the selected month. Calendar subscribes once to its month range, ordering by dateKey; its selected-day list filters that result without another day listener. Month navigation selects the first day of the new month. Listeners unsubscribe on route/date/UID changes; stale results are hidden while a new query loads. No full history download occurs.
 
@@ -92,6 +92,20 @@ Realtime snapshots update timelines, counts, markers and summaries. Stats derive
 Save/update/delete disable their own actions, retain dialogs while pending, and close/reset only after success. Failures keep input and permit retry. Read failures show a retry action. Known-offline writes fail with connection guidance. If connectivity drops after a write begins, Firebase may keep the write pending until reconnection; the dialog stays pending and no success is reported prematurely. No extra offline persistence, timeout cancellation or optimistic write layer is added.
 
 Rules restrict activities to their path owner, validate the exact field set/enums/lengths/basic timestamps and positive bounded duration, require server audit timestamps and preserve createdAt. They do not implement overlap checks or timezone-aware dateKey matching; service validation owns those local date checks. Source rules alone do not protect a remote project until published.
+
+## Phase 4 smart timeline
+
+Generic Add activity on Dashboard, Calendar or an empty day uses that selected day's latest activity end, even when entries are unsorted or contain gaps. Legacy end seconds round forward to the next available minute; if none remains in that day, start stays blank. Empty days use the centralized temporary `DEFAULT_WORKDAY_SETTINGS.dayStartTime` (09:00). Settings controls are still unapplied previews; Phase 5 will replace `getWorkdayPreferences()` with persisted preferences. Past/future days behave identically; the current clock does not affect defaults.
+
+The end initially suggests start +30 minutes. Changing start shifts that suggestion until the user manually edits end. Edit and gap-fill forms preserve their existing end. If +30 minutes would cross midnight, end stays blank so the user can choose a valid same-day end. Duration updates while typing. One-minute activities are valid; equal, inverted, invalid, sub-minute, cross-day and 24-hour-or-longer ranges are rejected. New writes use zero seconds/milliseconds. Cross-midnight logging is deferred.
+
+Two blocks overlap when `newStart < existingEnd && newEnd > existingStart`. For an existing 09:00–10:00 block, another may start at 10:00, but 09:59 overlaps. Breaks and On hold activities occupy time equally. Edits exclude their own ID. The modal previews conflicts using available day data; the service always validates a fresh server query for the target date before create/update, including date moves. Read failures block saving and preserve the draft. This adds one daily query per save. Concurrent tabs can still pass their reads before either writes: no distributed lock or rule-level overlap enforcement is provided in this MVP.
+
+Timeline gaps are derived at minute precision using a sorted running maximum end, including an optional initial gap from 09:00. Gap boundaries round inward around legacy timestamp seconds so prefills do not include occupied time. The shared display threshold is one minute. Dashed “unlogged” rows offer Log activity with the exact gap start/end and selected date. Generic Add still appends to the latest end. Deleting the latest entry recomputes that default; deleting a middle entry exposes a gap. No trailing gap is inferred. Gaps do not affect counts/totals and are never persisted. Summary start/end remain actual earliest/latest activity times.
+
+Defaults are captured once when the modal opens. Realtime changes do not overwrite typed values; current snapshots and the service's fresh read still catch newly introduced conflicts. No activity schema, rules or index migration is needed. Local browser time construction avoids UTC date shifts and rejects nonexistent DST input times. Repeated DST hours use JavaScript's earlier offset; elapsed duration can differ from wall-clock labels across a DST transition. Changing browser timezone can change displayed times; persisted timezone preferences remain later scope.
+
+See the [29-part Phase 4 report](docs/PHASE_4_REPORT.md) for results, pending verification and limitations.
 
 ## Live verification checklist
 
@@ -112,9 +126,9 @@ Common fixes: unauthorized-domain → add the exact browser hostname; operation-
 
 ## Tests and formatting
 
-`npm test` runs native Node tests for config/auth/profile and activity date/duration/schema/mapper/summary helpers. These do not contact a backend.
+`npm test` runs native Node tests for config/auth/profile, activity date/duration/schema/mapper/summary helpers and smart defaults/overlap/gap logic, including local date checks in Kolkata, Los Angeles and Berlin. These do not contact a backend.
 
-The rules suite uses the real client SDK against the local Firestore emulator and the checked-in rules. It covers owner CRUD, daily/monthly queries, audit fields, invalid writes, guest/cross-user denial and profile restrictions. Install Firebase CLI and Java 21+, then run:
+The rules suite uses the real client SDK against the local Firestore emulator and the checked-in rules. It covers owner CRUD, daily/monthly queries, audit fields, invalid writes, guest/cross-user denial and profile restrictions. It also invokes the production activity service to verify create/edit overlap rejection, self-exclusion, destination-date validation, calculated duration, audit preservation, realtime updates and deletion. Install Firebase CLI and Java 21+, then run:
 
 ```sh
 firebase emulators:exec --only firestore --project demo-devtrack "npm run test:rules"
@@ -139,4 +153,4 @@ Phases 0–3 are complete. Phase 2 live authentication/profile/session verificat
 
 Settings remain local previews and reset when leaving the screen. Preview loading/error URLs remain supported only for Settings in production. Test-only activity adapters can simulate read states. Week/Day views remain roadmap placeholders.
 
-Phase 4: previous-end defaults, overlap prevention and advanced time rules. Phase 5: saved preferences. Later phases: alternate calendar views, reports, integrations, timers, teams, AI and deployment. No advanced time intelligence or settings persistence was added here.
+Phase 4 is complete: smart defaults, live duration, canonical time rules, create/edit overlap protection and clickable gaps. Unit/browser/emulator checks and user-confirmed live interactions passed; evidence and account/date corroboration limits are in the [Phase 4 report](docs/PHASE_4_REPORT.md). Phase 5: saved preferences. Later phases: alternate calendar views, reports, integrations, timers, teams, AI and deployment. Settings persistence remains deferred.

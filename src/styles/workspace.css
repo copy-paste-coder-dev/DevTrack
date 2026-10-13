@@ -375,6 +375,72 @@
   margin: 0;
   padding: 0;
 }
+.timeline-gap {
+  margin: 3px 0 13px 64px;
+  padding: 10px 12px;
+  border: 1px dashed #40d3ed40;
+  border-radius: 9px;
+  background: #40d3ed04;
+  color: var(--color-text-muted);
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  justify-content: space-between;
+  gap: 6px 12px;
+  font-size: 11px;
+}
+.timeline-gap > div {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 7px;
+}
+.timeline-gap strong {
+  color: var(--color-primary);
+  font-weight: 500;
+}
+.timeline-gap .button {
+  min-height: 44px;
+}
+.compact .timeline-gap {
+  margin-left: 20px;
+}
+.duration-preview {
+  display: flex;
+  justify-content: space-between;
+  gap: 12px;
+  padding: 10px 12px;
+  margin: 0 0 16px;
+  border: 1px solid var(--color-border);
+  border-radius: 7px;
+  color: var(--color-text-muted);
+  font-size: 12px;
+}
+.duration-preview strong {
+  color: var(--color-primary);
+}
+.duration-preview.invalid strong {
+  color: var(--color-text-muted);
+}
+.time-conflict {
+  border: 1px solid #f8717150;
+  background: #f871710a;
+  border-radius: 7px;
+  padding: 12px;
+  margin: 0 0 16px;
+  color: #fca5a5;
+  font-size: 12px;
+  overflow-wrap: anywhere;
+}
+@media (max-width: 480px) {
+  .activity-dialog .form-row {
+    grid-template-columns: minmax(0, 1fr);
+    gap: 0;
+  }
+  .timeline-gap {
+    margin-left: 17px;
+  }
+}
 .timeline-item {
   display: grid;
   grid-template-columns: 40px 16px minmax(0, 1fr);

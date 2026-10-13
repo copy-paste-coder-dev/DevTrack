@@ -70,7 +70,11 @@ export function DashboardPage() {
             <ChevronRight size={17} />
           </Button>
         </div>
-        <Button className="dashboard-add" onClick={() => setDialog({ activity: null })}>
+        <Button
+          className="dashboard-add"
+          disabled={isLoading || Boolean(error)}
+          onClick={() => setDialog({ activity: null })}
+        >
           <Plus size={17} />
           Add activity
         </Button>
@@ -176,6 +180,8 @@ export function DashboardPage() {
             </div>
             <ActivityTimeline
               activities={activities}
+              dateKey={dateKey}
+              onLogGap={(gap) => setDialog({ activity: null, gap })}
               onAdd={() => setDialog({ activity: null })}
               onEdit={(activity) => setDialog({ activity })}
               onDelete={(activity) => setDialog({ activity, action: 'delete' })}
@@ -188,6 +194,7 @@ export function DashboardPage() {
           key={dialog.activity?.id ?? 'create'}
           {...dialog}
           dateKey={dateKey}
+          activities={activities}
           onClose={() => setDialog(null)}
         />
       )}

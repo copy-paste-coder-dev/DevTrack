@@ -1,4 +1,4 @@
-import { useMemo, useState } from 'react'
+import { useState } from 'react'
 import { toast } from 'sonner'
 import { Dialog } from '../../../components/ui/Dialog'
 import { ConfirmationDialog } from '../../../components/ui/ConfirmationDialog'
@@ -8,36 +8,58 @@ import { useActivityMutations } from '../hooks/useActivityMutations'
 import { mapFormToActivityInput, type ActivityFormValues } from '../validation/activity.schema'
 import { getActivityErrorMessage } from '../utils/activityError'
 import { formatDisplayTime } from '../../../utils/date'
+import { buildCreateActivityDefaults, type ActivityGap } from '../domain/activityTime'
+import { getWorkdayPreferences } from '../../settings/workdayPreferences'
 
 export interface DialogSelection {
   activity: Activity | null
   action?: 'edit' | 'delete'
+  gap?: ActivityGap
 }
 interface ActivityDialogProps extends DialogSelection {
   dateKey: string
+  activities: Activity[]
   onClose: () => void
 }
 export function ActivityDialog({
   activity,
   action = 'edit',
   dateKey,
+  activities,
+  gap,
   onClose,
 }: ActivityDialogProps) {
   const [confirmDelete, setConfirmDelete] = useState(action === 'delete')
   const [error, setError] = useState<string | null>(null)
   const mutations = useActivityMutations()
   const busy = mutations.isCreating || mutations.isUpdating || mutations.isDeleting
-  const initialValues = useMemo(
-    () => ({
-      date: activity?.dateKey ?? dateKey,
-      type: activity?.activityType ?? 'development',
-      name: activity?.taskName ?? '',
-      status: activity?.status ?? 'in_progress',
-      start: activity ? formatDisplayTime(activity.startAt) : '09:00',
-      end: activity ? formatDisplayTime(activity.endAt) : '10:00',
-      notes: activity?.notes ?? '',
-    }),
-    [activity, dateKey],
+  // Capture defaults once on opening. Realtime updates must never reset a user's draft.
+  const [initialValues] = useState<ActivityFormValues>(() =>
+    activity
+      ? {
+          date: activity?.dateKey ?? dateKey,
+          type: activity?.activityType ?? 'development',
+          name: activity?.taskName ?? '',
+          status: activity?.status ?? 'in_progress',
+          start: formatDisplayTime(activity.startAt),
+          end: formatDisplayTime(activity.endAt),
+          notes: activity?.notes ?? '',
+        }
+      : buildCreateActivityDefaults({
+          dateKey,
+          activities,
+          dayStartTime: getWorkdayPreferences().dayStartTime,
+          gap,
+        }),
+  )
+  const [startHint] = useState(() =>
+    activity
+      ? undefined
+      : gap
+        ? 'Prefilled from this unlogged gap. You can edit these times.'
+        : activities.some((a) => a.dateKey === dateKey)
+          ? 'Suggested from your previous activity. You can edit this time.'
+          : 'Suggested from your configured day start.',
   )
   async function submit(values: ActivityFormValues) {
     if (busy) return
@@ -93,6 +115,10 @@ export function ActivityDialog({
       <ActivityForm
         mode={activity ? 'edit' : 'create'}
         initialValues={initialValues}
+        activities={activities}
+        excludeActivityId={activity?.id}
+        startHint={startHint}
+        preserveEndOnStartChange={Boolean(activity || gap)}
         busy={busy}
         error={error}
         onSubmit={submit}

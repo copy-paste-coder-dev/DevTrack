@@ -1,10 +1,8 @@
 import type { Activity, DaySummaryData } from '../types/activity.ts'
 import { formatDisplayTime } from '../../../utils/date.ts'
 
-export const sortActivities = (activities: Activity[]) =>
-  [...activities].sort(
-    (a, b) => a.startAt.getTime() - b.startAt.getTime() || a.id.localeCompare(b.id),
-  )
+import { getLatestEnd } from '../domain/activityTime.ts'
+export { sortActivities, getLatestEnd } from '../domain/activityTime.ts'
 export const sumDurationMinutes = (activities: Activity[]) =>
   activities.reduce((sum, item) => sum + item.durationMinutes, 0)
 export function countActivitiesByStatus(activities: Activity[]) {
@@ -18,9 +16,6 @@ export function getEarliestStart(activities: Activity[]) {
   return activities.length
     ? new Date(Math.min(...activities.map((a) => a.startAt.getTime())))
     : null
-}
-export function getLatestEnd(activities: Activity[]) {
-  return activities.length ? new Date(Math.max(...activities.map((a) => a.endAt.getTime()))) : null
 }
 export function getDaySummary(activities: Activity[]): DaySummaryData {
   const start = getEarliestStart(activities),

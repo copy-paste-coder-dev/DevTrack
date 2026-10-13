@@ -32,10 +32,7 @@ export function mapActivityDocument(id: string, raw: unknown): Activity {
     createdAt: parsed.createdAt ?? null,
     updatedAt: parsed.updatedAt ?? null,
   }
-  if (
-    data.endAt.toMillis() <= data.startAt.toMillis() ||
-    calculateDurationMinutes(data.startAt.toDate(), data.endAt.toDate()) !== data.durationMinutes
-  )
+  if (calculateDurationMinutes(data.startAt.toDate(), data.endAt.toDate()) !== data.durationMinutes)
     throw new Error('The stored activity has invalid times or duration.')
   return {
     ...data,

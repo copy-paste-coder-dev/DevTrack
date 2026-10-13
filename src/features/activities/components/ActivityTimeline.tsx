@@ -4,9 +4,21 @@ import { activityMeta } from '../config/presentation'
 import type { Activity } from '../types/activity'
 import { formatDisplayTime } from '../../../utils/date'
 import { getLatestEnd, sortActivities } from '../utils/activitySummary'
+import { Fragment } from 'react'
+import { Clock3, Plus } from 'lucide-react'
+import { Button } from '../../../components/ui/Button'
+import {
+  detectActivityGaps,
+  GAP_DISPLAY_THRESHOLD_MINUTES,
+  type ActivityGap,
+} from '../domain/activityTime'
+import { getWorkdayPreferences } from '../../settings/workdayPreferences'
+import { formatDuration } from '../../../utils/duration'
 
 interface ActivityTimelineProps {
   activities: Activity[]
+  dateKey: string
+  onLogGap: (gap: ActivityGap) => void
   onEdit: (activity: Activity) => void
   onDelete: (activity: Activity) => void
   onAdd: () => void
@@ -23,21 +35,52 @@ export function ActivityTimelineItem(props: ActivityCardProps) {
 }
 export function ActivityTimeline({
   activities,
+  dateKey,
+  onLogGap,
   onEdit,
   onDelete,
   onAdd,
   compact = false,
 }: ActivityTimelineProps) {
-  if (!activities.length) return <EmptyState onAdd={onAdd} />
+  const { dayStartTime } = getWorkdayPreferences()
+  if (!activities.length)
+    return <EmptyState onAdd={onAdd} description={`Your day starts at ${dayStartTime}.`} />
+  const gaps = detectActivityGaps(dateKey, activities, dayStartTime).filter(
+    (gap) => gap.durationMinutes >= GAP_DISPLAY_THRESHOLD_MINUTES,
+  )
+  const sorted = sortActivities(activities)
   return (
     <ol className={`activity-timeline ${compact ? 'compact' : ''}`} aria-label="Daily activities">
-      {sortActivities(activities).map((activity) => (
-        <ActivityTimelineItem
-          key={activity.id}
-          activity={activity}
-          onEdit={onEdit}
-          onDelete={onDelete}
-        />
+      {sorted.map((activity) => (
+        <Fragment key={activity.id}>
+          {gaps
+            .filter(
+              (gap) =>
+                sorted.find(
+                  (a) => Math.floor(a.startAt.getTime() / 60000) * 60000 === gap.endAt.getTime(),
+                )?.id === activity.id,
+            )
+            .map((gap) => (
+              <li className="timeline-gap" key={gap.startAt.getTime()}>
+                <div>
+                  <Clock3 size={15} />
+                  <strong>{formatDuration(gap.durationMinutes)} unlogged</strong>
+                  <span>
+                    {formatDisplayTime(gap.startAt)}–{formatDisplayTime(gap.endAt)}
+                  </span>
+                </div>
+                <Button
+                  variant="ghost"
+                  onClick={() => onLogGap(gap)}
+                  aria-label={`Log activity from ${formatDisplayTime(gap.startAt)} to ${formatDisplayTime(gap.endAt)}`}
+                >
+                  <Plus size={15} />
+                  Log activity
+                </Button>
+              </li>
+            ))}
+          <ActivityTimelineItem activity={activity} onEdit={onEdit} onDelete={onDelete} />
+        </Fragment>
       ))}
       {!compact && (
         <li className="timeline-end">

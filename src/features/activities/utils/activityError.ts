@@ -1,7 +1,10 @@
+import { ActivityTimeError } from '../domain/activityTime.ts'
+
 export function getActivityErrorMessage(
   cause: unknown,
   operation: 'read' | 'save' | 'delete' = 'save',
 ) {
+  if (cause instanceof ActivityTimeError) return cause.message
   const code =
     cause && typeof cause === 'object' && 'code' in cause
       ? String(cause.code).replace(/^firestore\//, '')

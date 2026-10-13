@@ -29,7 +29,7 @@ test('activity form validates fields, saves and restores focus', async ({ page }
   await page.getByLabel(/^End time/).fill('')
   await page.getByRole('button', { name: 'Save activity' }).click()
   await expect(page.getByText('Choose an end time.')).toBeVisible()
-  await page.getByLabel(/^End time/).fill('10:00')
+  await page.getByLabel(/^End time/).fill('16:00')
   await page.getByRole('button', { name: 'Save activity' }).click()
   await expect(dialog).not.toBeVisible()
   await expect(page.getByText('Activity logged.')).toBeVisible()
@@ -152,11 +152,7 @@ test('busy, light, empty and long-task fixtures keep timeline and summaries cons
   await expect(page.getByText('No activities logged for this day.')).toBeVisible()
   await page.getByRole('button', { name: 'Log first activity' }).click()
   await expect(page.getByLabel(/^Date/)).toHaveValue('2026-10-14')
-  await expect(
-    page.getByText(
-      'In a later phase, start time will default to the previous activity’s end time. You can edit it.',
-    ),
-  ).toBeVisible()
+  await expect(page.getByText('Suggested from your configured day start.')).toBeVisible()
   await page.keyboard.press('Escape')
   await page.setViewportSize({ width: 390, height: 844 })
   await page.goto('/app?date=2026-10-09')

@@ -5,7 +5,16 @@ type InputProps = InputHTMLAttributes<HTMLInputElement> & {
   error?: string
   hint?: string
 }
-export function Input({ label, error, hint, id, className = '', required, ...props }: InputProps) {
+export function Input({
+  label,
+  error,
+  hint,
+  id,
+  className = '',
+  required,
+  'aria-describedby': descriptionId,
+  ...props
+}: InputProps) {
   const generatedId = useId()
   const inputId = id ?? generatedId
   return (
@@ -23,7 +32,7 @@ export function Input({ label, error, hint, id, className = '', required, ...pro
         id={inputId}
         aria-invalid={Boolean(error)}
         aria-describedby={
-          [hint ? `${inputId}-hint` : '', error ? `${inputId}-error` : '']
+          [hint ? `${inputId}-hint` : '', error ? `${inputId}-error` : '', descriptionId]
             .filter(Boolean)
             .join(' ') || undefined
         }

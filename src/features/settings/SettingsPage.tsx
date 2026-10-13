@@ -216,7 +216,8 @@ export function SettingsPage() {
                     return
                   }
                   toast.success('Preferences previewed', {
-                    description: 'These changes are not saved or applied to sample activities.',
+                    description:
+                      'These preview changes are not saved or applied to activity defaults.',
                   })
                 }}
               >
@@ -236,7 +237,7 @@ export function SettingsPage() {
             </div>
             <div className="settings-version">
               <span className="online-dot" />
-              DevTrack · Phase 1 preview
+              DevTrack · Preferences preview
             </div>
           </aside>
         </div>

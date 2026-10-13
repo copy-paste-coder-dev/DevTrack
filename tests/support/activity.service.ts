@@ -9,6 +9,7 @@ import { combineDateAndTime } from '../../src/utils/date'
 import { activityInputSchema } from '../../src/features/activities/validation/activity.schema'
 import { calculateDurationMinutes } from '../../src/utils/duration'
 import { sortActivities } from '../../src/features/activities/utils/activitySummary'
+import { assertActivityCanSave } from '../../src/features/activities/domain/activityTime'
 
 const storageKey = 'devtrack-e2e-activities'
 const listeners = new Set<() => void>()
@@ -59,12 +60,20 @@ function write(uid: string, data: Activity[]) {
   localStorage.setItem(storageKey, JSON.stringify({ ...store, [uid]: data }))
   for (const callback of listeners) callback()
 }
-function options(): { readError?: string; mutationError?: string; delay?: number } {
+function options(): {
+  readError?: string
+  mutationError?: string
+  delay?: number
+  holdMutation?: boolean
+} {
   return JSON.parse(localStorage.getItem('devtrack-e2e-activity-options') ?? '{}')
 }
 async function beforeMutation() {
   if (!navigator.onLine) throw { code: 'app/offline' }
   const { mutationError, delay = 50 } = options()
+  const deadline = Date.now() + 15000
+  while (options().holdMutation && Date.now() < deadline)
+    await new Promise((resolve) => setTimeout(resolve, 25))
   await new Promise((resolve) => setTimeout(resolve, delay))
   if (mutationError) throw { code: mutationError }
 }
@@ -104,6 +113,7 @@ function subscribe(
 export const activityService: ActivityService = {
   async createActivity(uid, input) {
     await beforeMutation()
+    assertActivityCanSave(activityInputSchema.parse(input), read(uid))
     const id = crypto.randomUUID(),
       now = new Date()
     write(uid, [...read(uid), { ...normalized(input), id, createdAt: now, updatedAt: now }])
@@ -112,6 +122,7 @@ export const activityService: ActivityService = {
   async updateActivity(uid, id, input) {
     await beforeMutation()
     const activities = read(uid)
+    assertActivityCanSave(activityInputSchema.parse(input), activities, id)
     if (!activities.some((a) => a.id === id)) throw { code: 'not-found' }
     write(
       uid,

@@ -1,7 +1,7 @@
 import { z } from 'zod'
 import { activityStatuses, activityTypes } from '../types/activity.ts'
-import { combineDateAndTime, isDateKey, toDateKey } from '../../../utils/date.ts'
-import { calculateDurationMinutes } from '../../../utils/duration.ts'
+import { combineDateAndTime, isDateKey } from '../../../utils/date.ts'
+import { parseTimeRange, validateTimeRange } from '../domain/activityTime.ts'
 
 export const activityInputSchema = z
   .object({
@@ -18,20 +18,12 @@ export const activityInputSchema = z
     notes: z.string().trim().max(1000, 'Use 1,000 characters or fewer.').optional().default(''),
   })
   .superRefine((input, ctx) => {
-    if (
-      input.endAt <= input.startAt ||
-      Math.round((input.endAt.getTime() - input.startAt.getTime()) / 60000) <= 0
-    )
+    const range = validateTimeRange(input.startAt, input.endAt, input.dateKey, true)
+    if (!range.valid)
       ctx.addIssue({
         code: 'custom',
         path: ['endAt'],
-        message: 'End time must be after start time.',
-      })
-    if (toDateKey(input.startAt) !== input.dateKey || toDateKey(input.endAt) !== input.dateKey)
-      ctx.addIssue({
-        code: 'custom',
-        path: ['dateKey'],
-        message: 'Times must belong to the selected day.',
+        message: range.message,
       })
   })
 
@@ -56,22 +48,12 @@ export const activityFormSchema = z
     notes: z.string().max(1000, 'Use 1,000 characters or fewer.'),
   })
   .superRefine((value, ctx) => {
-    if (
-      !isDateKey(value.date) ||
-      !/^([01]\d|2[0-3]):[0-5]\d$/.test(value.start) ||
-      !/^([01]\d|2[0-3]):[0-5]\d$/.test(value.end)
-    )
-      return
-    try {
-      calculateDurationMinutes(
-        combineDateAndTime(value.date, value.start),
-        combineDateAndTime(value.date, value.end),
-      )
-    } catch (cause) {
+    const range = parseTimeRange(value.date, value.start, value.end)
+    if (!range.valid) {
       ctx.addIssue({
         code: 'custom',
         path: ['end'],
-        message: cause instanceof Error ? cause.message : 'Choose valid times.',
+        message: range.message,
       })
     }
   })
