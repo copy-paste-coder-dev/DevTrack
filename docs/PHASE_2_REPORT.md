@@ -117,7 +117,7 @@ Popup-only authentication is implemented; mobile-device redirect fallback, Edge 
 
 ## 21. Deferred work
 
-Phase 3: real activity CRUD, queries and activity rules. Phase 4: smart start times, durations and overlap/time validation. Phase 5: persistent settings. Phase 6: real calendar queries and computed daily summaries. GitHub/email auth, integrations, reports, teams, billing, notifications, backend functions and deployment remain outside this phase.
+Phase 3 now delivers real activity CRUD, queries, activity rules, calendar reads and computed daily summaries. Remaining: Phase 4 smart start times and overlap/advanced time validation; Phase 5 persistent settings. GitHub/email auth, integrations, reports, teams, billing, notifications, backend functions and hosting deployment remain outside this phase.
 
 ## 22. Completion checklist
 

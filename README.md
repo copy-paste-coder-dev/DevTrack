@@ -95,7 +95,7 @@ Rules restrict activities to their path owner, validate the exact field set/enum
 
 ## Live verification checklist
 
-Phase 2 and Phase 3 cannot be declared complete from synthetic tests alone.
+Phase 2 and Phase 3 were completed on October 13, 2026 using user-confirmed live UI checks plus independent configuration/backend/rules verification. The sequence below remains useful for future regression checks; synthetic tests alone do not establish live success.
 
 1. Enable Google, authorize the app hostname, create Firestore, publish rules and enable the index above.
 2. As a guest, verify protected routes reach login. Sign in, verify real name/email/photo, and inspect the single users/{uid} profile and its audit timestamps.
@@ -135,7 +135,7 @@ Screenshots go to ignored `artifacts/screenshots/`; tests cover 390×844, 430×9
 
 ## Phase status and remaining scope
 
-Phase 0/1 are complete and committed. Phase 2 code was checkpointed as `34bef16`; live Google/profile/persistence/logout checks are unconfirmed. Phase 3 implements real activity CRUD, month/day reads, summaries and rules; its live validation is tracked in [Phase 3 report](docs/PHASE_3_REPORT.md). See [progress](docs/PROGRESS.md) and [Phase 2 report](docs/PHASE_2_REPORT.md).
+Phases 0–3 are complete. Phase 2 live authentication/profile/session verification was committed as `c78927b`. Phase 3 rules and the daily index are deployed to development project `dev-track-46323`, the index is READY, real CRUD/date moves/refresh/calendar behavior passed, and backend audit/deletion checks passed. Live guest denial and released-rules request-context tests also passed; cross-user contexts were simulated rather than a second Google login. Details and limits are in the [Phase 3 report](docs/PHASE_3_REPORT.md), [progress](docs/PROGRESS.md) and [Phase 2 report](docs/PHASE_2_REPORT.md). No hosting deployment or remote Git push was performed.
 
 Settings remain local previews and reset when leaving the screen. Preview loading/error URLs remain supported only for Settings in production. Test-only activity adapters can simulate read states. Week/Day views remain roadmap placeholders.
 

@@ -1,10 +1,10 @@
 # Phase 3 activity persistence report
 
-Updated: October 13, 2026. The real Firestore implementation and local rules verification are ready. Live CRUD, index availability and deployed rules enforcement are still unverified; this phase is incomplete. Implementation checkpoint: `7960598`.
+Updated: October 13, 2026. Implementation, local checks, rules/index deployment and required live CRUD/calendar verification are complete. Implementation checkpoint: `7960598`; rules emulator checkpoint: `82718bf`; Phase 2 live verification completion: `c78927b`.
 
 ## 1. Phase 1/2 architecture audit
 
-Reused the existing AuthProvider/useAuth, app-level UID, validated Firestore singleton factory, protected routes, Sonner feedback, React Hook Form/Zod form, native dialogs, cards, timeline, selected-date URL and responsive styles. Dashboard and Calendar depended on activities.mock.ts/calendar.mock.ts; selected dates defaulted to the demo day. Dialog submissions only showed preview toasts. Summary/goal fields were fixtures. Profile-only Firestore rules denied activity paths. Phase 2 implementation was saved separately as checkpoint `34bef16`; its full live profile/persistence/logout checks remain incomplete.
+Reused the existing AuthProvider/useAuth, app-level UID, validated Firestore singleton factory, protected routes, Sonner feedback, React Hook Form/Zod form, native dialogs, cards, timeline, selected-date URL and responsive styles. Dashboard and Calendar depended on activities.mock.ts/calendar.mock.ts; selected dates defaulted to the demo day. Dialog submissions only showed preview toasts. Summary/goal fields were fixtures. Profile-only Firestore rules denied activity paths. Phase 2 implementation was saved separately as checkpoint `34bef16`; its live profile/persistence/logout checks were subsequently completed during this phase.
 
 Migration: activity data/markers/summaries/forms become Firestore-backed, settings remain a preview. Shared type/status badges and layout retain their presentation. Calendar gains controlled month props; dialogs gain operation loading and error props. Services own SDK calls, hooks own UID/listeners/actions, pure helpers own conversion and summaries. No dependency was added.
 
@@ -58,13 +58,13 @@ combineDateAndTime builds a local Date from numeric year/month/day/hour/minute c
 
 ## 14. Rules changes
 
-Existing owner profile rules remain. A nested activity match allows get/list/create/update/delete only for the matching authenticated path UID. Writes require the exact ten fields, supported enums, bounded string lengths, dateKey format, ordered Timestamp values, positive bounded integer duration and server updatedAt. Creates require server createdAt; updates preserve it and limit changed keys to mutable fields. All other paths/settings remain denied. No public allow rule was added. Rules do not implement overlap checks or local-timezone date matching. Compilation and owner/guest/non-owner enforcement pass in the local emulator; deployment and remote enforcement remain unverified.
+Existing owner profile rules remain. A nested activity match allows get/list/create/update/delete only for the matching authenticated path UID. Writes require the exact ten fields, supported enums, bounded string lengths, dateKey format, ordered Timestamp values, positive bounded integer duration and server updatedAt. Creates require server createdAt; updates preserve it and limit changed keys to mutable fields. All other paths/settings remain denied. No public allow rule was added. Rules do not implement overlap checks or local-timezone date matching. Compilation and owner/guest/non-owner/invalid-write enforcement pass in the local emulator. The reviewed rules are now deployed and match the released source exactly; live guest requests and remote request-context evaluation are recorded below.
 
 ## 15. Indexes
 
 firestore.indexes.json declares activities, COLLECTION scope, dateKey ASCENDING + startAt ASCENDING for the daily equality/filter-order query. This follows [Firebase's equality/order indexing example](https://firebase.google.com/docs/firestore/query-data/index-overview). The monthly query ranges/orders on dateKey alone and uses its default single-field ascending index. firebase.json references both rules and indexes. README documents Console creation, CLI deployment and waiting for index readiness.
 
-The real browser dashboard showed the friendly failed-precondition/index-or-configuration message. No backend index link/details or remote index state was captured, so the exact remote cause/readiness has not been independently confirmed. Do not treat the checked-in definition as an already deployed/verified index.
+The development database initially had no composite indexes, causing the live failed-precondition. Deployed the declared index to dev-track-46323 on October 13. It progressed from CREATING to READY; a real daily equality/order query then succeeded. The user confirmed Try again/refresh restored the dashboard list. The remote index is COLLECTION scope with dateKey ASCENDING, startAt ASCENDING and Firestore's appended **name** ASCENDING. Monthly dateKey range/order reads also succeeded.
 
 ## 16. Files created
 
@@ -99,28 +99,25 @@ Removed src/mocks/activities.mock.ts and calendar.mock.ts. Legacy activity scena
 
 ## 19. Manual CRUD results and blockers
 
-Live Chrome at http://127.0.0.1:5173/app showed an authenticated real account in the app shell. This establishes an existing live session/identity, not a newly observed OAuth popup or complete Phase 2 lifecycle verification. The dashboard showed Firestore requires an index or configuration update. No create/read/update/delete success in the remote database was observed.
+No completion blocker remains. Live UI actions below were performed and confirmed by the user. Backend configuration, stored fields, queries and deletion were independently corroborated using the authenticated Firebase CLI/API. Privileged OAuth reads corroborate data but do not prove client authorization; separate guest requests, Rules API evaluations and emulator tests cover enforcement.
 
-The browser connector inventory was empty. Native Computer Use could read Chrome, but opening a Console tab failed first with coordinate input geometry is unavailable; after refreshing a screenshot-backed window, the retry timed out with click_element. Native input stopped after the failed recovery. The [computer-use skill](<C:/Users/Shajith Ali S/.codex/plugins/cache/openai-bundled/computer-use/26.1007.21434/skills/computer-use/SKILL.md>) instructs: "report the exact error if recovery fails." Its [guidance](<C:/Users/Shajith Ali S/.codex/plugins/cache/openai-bundled/computer-use/26.1007.21434/docs/guidance.md>) also states: "Do not automate user authentication dialogs." The Firebase plugin is available but not installed/connected; no authenticated project-management connector is callable. User has authorized continuing but has not supplied a live verification result. No console rule/index change is claimed.
+Project setup: confirmed dev-track-46323 is the effective Vite project, Google is enabled, and localhost/127.0.0.1 are authorized. Confirmed the default Standard/Native Firestore database exists in nam5. Saved the previous rules/index state to ignored artifacts, deployed the reviewed repository rules and index, downloaded the released rules and verified an exact normalized-text match. The initial remote rules were Firebase's temporary public test rules; they are now replaced with owner-only access. The index is READY and the live query error is resolved.
 
-Every remaining blocker:
+Create/read: the user created “Test” on October 13, Development, In progress, 09:00–10:30. Firestore contained one generated document with 90-minute duration, start/end Timestamp values corresponding to Asia/Calcutta local input, and equal server createdAt/updatedAt. The user initially saw an index error while its build was pending; after readiness, Try again/refresh displayed the saved entry without saving a duplicate.
 
-1. Confirm Firestore exists and the app config refers to the intended development database.
-2. Deploy/publish the reviewed activity rules and provision/enable the daily composite index; resolve the observed live failed-precondition.
-3. Verify actual backend create, selected-day read, refresh persistence, update/time/status/date move, immutable createdAt, server updatedAt and deletion.
-4. Verify actual monthly range results and calendar markers across dates/months after mutations.
-5. Validate deployed rules deny guests/cross-user get/list/writes and reject invalid/immutable-field writes; source ownership rules alone are not proof.
-6. Inspect live operation for SDK/runtime warnings/errors and complete remaining Phase 2 profile/relogin/refresh/logout checks.
+Edit/date move: the user renamed the task (including a trailing quotation mark), moved it to October 14 and changed its times to 10:00–11:00. Backend reads confirmed the same document ID, unchanged createdAt, advanced updatedAt, new dateKey/timestamps and a derived duration of 60 minutes. The user confirmed removal from the original day, appearance on the destination day and persistence after refresh. The completed-status write was performed on the separate October 12 “TEST” entry; its backend status changed to completed with a new updatedAt. The October 14 entry retained in_progress. These are the actual observed results, not an assumed status change on the moved entry.
 
-October 13 follow-up: installed official Firebase CLI 15.33.0 under ignored artifacts, leaving application dependencies and the lockfile unchanged. All six web settings are present and identify development project dev-track-46323. The CLI has a saved account, but its refresh credentials are expired: the database-list request returned HTTP 401 UNAUTHENTICATED. Started an interactive localhost-callback reauthentication and asked the user to complete Google authorization. No successful callback has arrived. CLI authentication is separate from the app's observed Google session. No remote rules/index deployment or database change was performed.
+Delete: the user deleted only the October 14 verification entry through confirmation and confirmed that its row and calendar marker stayed gone after refresh. An exact document GET returned HTTP 404. The October 14 daily query returned zero documents and the October monthly query contained only the remaining October 12 entry.
 
-Computer Use also stopped this turn because it could not determine the Windows browser URL with enough confidence to enforce policy. No further UI actions were issued. The authentication prohibition quoted above requires user account selection/approval; repeating authorization to proceed does not supply a successful Google login.
+Security: six direct unauthenticated live requests were denied with HTTP 403 PERMISSION_DENIED / “Missing or insufficient permissions”: activity get/list/create/update/delete and profile get. The guest create probe used server audit transforms and valid fields. No guest write succeeded. In addition, 18 remote Firebase Rules API evaluations against the exact released ruleset passed: owner activity get/list/delete allowed; guest and another simulated UID activity get/list/create/update/delete denied; owner profile get allowed; guest/other UID profile get, owner profile delete and settings get denied. These are simulated request contexts evaluated remotely, equivalent in purpose to Rules Playground; no second Google account was signed in, and evaluated deletes do not execute data deletion. Invalid/immutable-field writes are covered by the 23 emulator checks against the same published rules source. See [the Rules API testing reference](https://firebase.google.com/docs/reference/rules/rest/v1/projects/test).
 
-Setup, deployment and the exact manual sequence are in README. A successful CLI reauthentication or connected project capability is needed for remote deployment, followed by live client verification. Repository work is checkpointed separately; an incomplete checkpoint is not a completed-phase claim.
+Authentication regression: the user confirmed logout redirects /app to Login, Google re-login succeeds, Calendar refresh restores the session and no new red app/Firebase Console errors appeared. Backend profile reads confirmed one matching account profile, unchanged createdAt and a later equal lastLoginAt/updatedAt after re-login. Phase 2 completion is recorded in c78927b.
+
+Automation limitation: native Computer Use stopped because it could not determine the Windows browser URL with enough confidence to enforce policy. No further UI actions followed that stop. The [computer-use skill](<C:/Users/Shajith Ali S/.codex/plugins/cache/openai-bundled/computer-use/26.1007.21434/skills/computer-use/SKILL.md>) references [guidance](<C:/Users/Shajith Ali S/.codex/plugins/cache/openai-bundled/computer-use/26.1007.21434/docs/guidance.md>) stating “Do not automate user authentication dialogs.” The user completed authentication and live UI steps; CLI/API work continued independently. No credentials, private keys or environment values were committed. Backups, runtime downloads and verification logs remain ignored artifacts.
 
 ## 20. Multi-date results
 
-Synthetic UI coverage verifies October 12 → October 13 date moves, disappearance from the old day, preservation of the ID/createdAt in the adapter, duration/status updates, marker addition/removal and refresh after deletion. Existing October 12/13/9 fixtures cover distinct day filtering. Live backend multi-date/month behavior is still pending.
+Actual backend daily queries isolate October 13/14. Backend document reads found October 12 and 13 before the move. The monthly range query returned October 12 and 14 after the move, then only October 12 after deletion. The user confirmed Calendar markers, selected-day contents, navigation to another month and back, and refresh. Synthetic tests additionally cover the October 12 → 13 move and listener cleanup. The live test used October 13 → 14 to keep the existing October 12 entry separate.
 
 ## 21. Responsive regression results
 
@@ -142,7 +139,9 @@ October 13 rules suite: **23 checks passed in 13.5 seconds** against Firestore e
 
 ## 25. Known limitations
 
-External blockers above remain mandatory. Rules compile and pass local emulator checks but are not verified remotely; no Admin credentials were used. Firestore listeners may reflect SDK local pending writes; a success toast waits for the server-acknowledged write promise. Known-offline saves are rejected, but a network drop after submission may keep the dialog pending until reconnection. There is no advanced offline queue UI. Single-day activities and browser-local display are supported. No overlap restrictions, pagination, optimistic rollback framework or persisted goals/settings were introduced.
+No Phase 3 completion blocker remains. Live UI success is user-confirmed because native browser automation stopped on URL detection; backend state was independently checked. Guest denial is verified through actual unauthenticated requests; other-user access was evaluated with simulated contexts against the released ruleset and real client emulator identities, not a second live Google account. Invalid raw owner writes were exercised in the emulator rather than against the development database. Long-task and multiline-note edge cases have automated coverage; the live save used a short task and empty notes, and the edit preserved a quotation mark safely. No service-account private keys were used; CLI OAuth reads are privileged and are not counted as proof of rules enforcement.
+
+Firestore listeners may reflect SDK local pending writes; a success toast waits for the server-acknowledged write promise. Known-offline saves are rejected, but a network drop after submission may keep the dialog pending until reconnection. There is no advanced offline queue UI. Single-day activities and browser-local display are supported. Rules check dateKey format but do not enforce timezone-aware consistency or exact duration arithmetic; service/form validation performs those checks. No overlap restrictions, pagination, optimistic rollback framework or persisted goals/settings were introduced. Physical devices and other browsers remain unverified. No hosting deployment or remote Git push was performed.
 
 ## 26. Deferred Phase 4+
 
@@ -162,9 +161,9 @@ Previous-end start defaults, overlap prevention, day-start preferences, advanced
 - [x] README deployment/live tests and completed/pending report prepared.
 - [x] Final complete browser suite: 34 passed.
 - [x] Rules compile and 23 emulator checks pass; reproducible test command documented.
-- [ ] Remote rules/index deployed and observed query error resolved.
-- [ ] Real Firestore CRUD/refresh/date-range/multi-date/audit behavior verified.
-- [ ] Guest/cross-user/invalid-write security enforcement verified remotely.
-- [ ] Remaining Phase 2 live lifecycle checks completed.
+- [x] Remote rules/index deployed, index READY and observed query error resolved.
+- [x] Real Firestore CRUD/refresh/date-range/multi-date/audit behavior verified.
+- [x] Live guest denial and released-rules cross-user evaluation pass; invalid writes pass emulator denial checks.
+- [x] Phase 2 live lifecycle checks completed and committed separately.
 
-PHASE 3 STATUS: INCOMPLETE
+PHASE 3 STATUS: COMPLETE
