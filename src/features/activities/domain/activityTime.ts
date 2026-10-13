@@ -1,5 +1,12 @@
 import type { Activity, CreateActivityInput } from '../types/activity.ts'
-import { combineDateAndTime, formatDisplayTime, isDateKey, toDateKey } from '../../../utils/date.ts'
+import {
+  combineDateAndTime,
+  formatDisplayTime,
+  isDateKey,
+  toDateKey,
+  isTimeString,
+  timeToMinutes,
+} from '../../../utils/date.ts'
 
 export type TimeRangeResult =
   { valid: true; durationMinutes: number } | { valid: false; message: string }
@@ -73,9 +80,8 @@ export function getSuggestedActivityStartTime(
 
 // Wall-clock addition never wraps into a different day. Near midnight the end stays blank.
 export function suggestEndTime(start: string, minutes = 30): string {
-  if (!/^([01]\d|2[0-3]):[0-5]\d$/.test(start)) return ''
-  const [hours, minute] = start.split(':').map(Number)
-  const end = hours! * 60 + minute! + minutes
+  if (!isTimeString(start)) return ''
+  const end = timeToMinutes(start) + minutes
   if (end >= 1440 || end < 0) return ''
   return `${String(Math.floor(end / 60)).padStart(2, '0')}:${String(end % 60).padStart(2, '0')}`
 }
@@ -94,8 +100,11 @@ export function findOverlappingActivity(
   )
 }
 
-export function describeActivityConflict(activity: Activity): string {
-  return `Conflicts with “${activity.taskName || 'Existing activity'}” (${formatDisplayTime(activity.startAt)}–${formatDisplayTime(activity.endAt)}). Choose a different start or end time.`
+export function describeActivityConflict(
+  activity: Activity,
+  formatTime = formatDisplayTime,
+): string {
+  return `Conflicts with “${activity.taskName || 'Existing activity'}” (${formatTime(activity.startAt)}–${formatTime(activity.endAt)}). Choose a different start or end time.`
 }
 
 export function assertActivityCanSave(

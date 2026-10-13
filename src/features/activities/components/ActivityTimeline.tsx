@@ -2,7 +2,6 @@ import { EmptyState } from '../../../components/ui/EmptyState'
 import { ActivityCard, type ActivityCardProps } from './ActivityCard'
 import { activityMeta } from '../config/presentation'
 import type { Activity } from '../types/activity'
-import { formatDisplayTime } from '../../../utils/date'
 import { getLatestEnd, sortActivities } from '../utils/activitySummary'
 import { Fragment } from 'react'
 import { Clock3, Plus } from 'lucide-react'
@@ -12,7 +11,8 @@ import {
   GAP_DISPLAY_THRESHOLD_MINUTES,
   type ActivityGap,
 } from '../domain/activityTime'
-import { getWorkdayPreferences } from '../../settings/workdayPreferences'
+import { useUserPreferences } from '../../settings/hooks/useUserPreferences'
+import { formatTime, formatTimeString } from '../../settings/utils/timeFormat'
 import { formatDuration } from '../../../utils/duration'
 
 interface ActivityTimelineProps {
@@ -25,9 +25,12 @@ interface ActivityTimelineProps {
   compact?: boolean
 }
 export function ActivityTimelineItem(props: ActivityCardProps) {
+  const { preferences } = useUserPreferences()
   return (
     <li className={`timeline-item tone-${activityMeta[props.activity.activityType].color}`}>
-      <span className="timeline-time">{formatDisplayTime(props.activity.startAt)}</span>
+      <span className="timeline-time">
+        {formatTime(props.activity.startAt, preferences.timeFormat)}
+      </span>
       <span className="timeline-dot" />
       <ActivityCard {...props} />
     </li>
@@ -42,15 +45,31 @@ export function ActivityTimeline({
   onAdd,
   compact = false,
 }: ActivityTimelineProps) {
-  const { dayStartTime } = getWorkdayPreferences()
+  const {
+    preferences: { dayStartTime, timeFormat },
+    isLoading,
+  } = useUserPreferences()
   if (!activities.length)
-    return <EmptyState onAdd={onAdd} description={`Your day starts at ${dayStartTime}.`} />
+    return (
+      <EmptyState
+        onAdd={onAdd}
+        disabled={isLoading}
+        description={
+          isLoading
+            ? 'Loading your workday preferences…'
+            : `Your day starts at ${formatTimeString(dayStartTime, timeFormat)}.`
+        }
+      />
+    )
   const gaps = detectActivityGaps(dateKey, activities, dayStartTime).filter(
     (gap) => gap.durationMinutes >= GAP_DISPLAY_THRESHOLD_MINUTES,
   )
   const sorted = sortActivities(activities)
   return (
-    <ol className={`activity-timeline ${compact ? 'compact' : ''}`} aria-label="Daily activities">
+    <ol
+      className={`activity-timeline ${compact ? 'compact' : ''} format-${timeFormat}`}
+      aria-label="Daily activities"
+    >
       {sorted.map((activity) => (
         <Fragment key={activity.id}>
           {gaps
@@ -66,13 +85,14 @@ export function ActivityTimeline({
                   <Clock3 size={15} />
                   <strong>{formatDuration(gap.durationMinutes)} unlogged</strong>
                   <span>
-                    {formatDisplayTime(gap.startAt)}–{formatDisplayTime(gap.endAt)}
+                    {formatTime(gap.startAt, timeFormat)}–{formatTime(gap.endAt, timeFormat)}
                   </span>
                 </div>
                 <Button
                   variant="ghost"
                   onClick={() => onLogGap(gap)}
-                  aria-label={`Log activity from ${formatDisplayTime(gap.startAt)} to ${formatDisplayTime(gap.endAt)}`}
+                  disabled={isLoading}
+                  aria-label={`Log activity from ${formatTime(gap.startAt, timeFormat)} to ${formatTime(gap.endAt, timeFormat)}`}
                 >
                   <Plus size={15} />
                   Log activity
@@ -84,7 +104,7 @@ export function ActivityTimeline({
       ))}
       {!compact && (
         <li className="timeline-end">
-          <span>{formatDisplayTime(getLatestEnd(activities)!)}</span>
+          <span>{formatTime(getLatestEnd(activities)!, timeFormat)}</span>
           <i />
           <span>You made room for good work.</span>
         </li>

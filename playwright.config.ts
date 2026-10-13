@@ -8,6 +8,8 @@ const baseURL = `http://127.0.0.1:${port}`
 export default defineConfig({
   testDir: './tests/e2e',
   fullyParallel: false,
+  // These scenarios exercise several routes, mutations and refreshes on local Chrome.
+  timeout: 60000,
   use: {
     baseURL,
     channel: 'chrome',

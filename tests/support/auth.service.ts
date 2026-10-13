@@ -11,6 +11,7 @@ const fixture: AuthUser = {
 }
 const listeners = new Set<(user: AuthUser | null) => void>()
 interface Options {
+  signInUser?: AuthUser
   initializationDelay?: number
   initializationError?: boolean
   signInDelay?: number
@@ -45,7 +46,7 @@ export const authService: AuthService = {
     if (!navigator.onLine) throw { code: 'app/offline' }
     await new Promise((resolve) => setTimeout(resolve, options().signInDelay ?? 80))
     if (options().signInError) throw { code: options().signInError }
-    publish(fixture)
+    publish(options().signInUser ?? fixture)
     // Deliberately emit auth before profile sync, reproducing the real SDK's ordering.
     await new Promise((resolve) => setTimeout(resolve, options().signInDelay ?? 80))
     return { profileSyncFailed: options().profileSyncFailed ?? false }

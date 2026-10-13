@@ -30,8 +30,10 @@ import { useActivitiesByRange } from './hooks/useActivitiesByRange'
 import { getActivityDates, getDaySummary, countActivitiesByStatus } from './utils/activitySummary'
 import { getMonthDateRange } from '../../utils/date'
 import { formatDuration } from '../../utils/duration'
+import { useUserPreferences } from '../settings/hooks/useUserPreferences'
 
 export function DashboardPage() {
+  const preferences = useUserPreferences()
   const { selected, dateKey, selectDay } = useSelectedDay()
   const { activities, isLoading, error, retry } = useActivitiesByDate(dateKey)
   const range = getMonthDateRange(selected)
@@ -72,7 +74,7 @@ export function DashboardPage() {
         </div>
         <Button
           className="dashboard-add"
-          disabled={isLoading || Boolean(error)}
+          disabled={isLoading || Boolean(error) || preferences.isLoading}
           onClick={() => setDialog({ activity: null })}
         >
           <Plus size={17} />

@@ -5,7 +5,7 @@ import { Trash2 } from 'lucide-react'
 import { Button } from '../../../components/ui/Button'
 import { Input, Select } from '../../../components/ui/Input'
 import { Textarea } from '../../../components/ui/Textarea'
-import { activityStatuses, activityTypes, type Activity } from '../types/activity'
+import { activityStatuses, type Activity } from '../types/activity'
 import { activityMeta, statusMeta } from '../config/presentation'
 import { activityFormSchema, type ActivityFormValues } from '../validation/activity.schema'
 import {
@@ -15,6 +15,9 @@ import {
   suggestEndTime,
 } from '../domain/activityTime'
 import { formatDuration } from '../../../utils/duration'
+import { useUserPreferences } from '../../settings/hooks/useUserPreferences'
+import { getActivityTypeOptions } from '../../settings/utils/activityTypeOptions'
+import { formatTime } from '../../settings/utils/timeFormat'
 
 interface ActivityFormProps {
   mode: 'create' | 'edit'
@@ -42,6 +45,11 @@ export function ActivityForm({
   busy,
   error,
 }: ActivityFormProps) {
+  const { preferences } = useUserPreferences()
+  const options = getActivityTypeOptions(
+    preferences.enabledActivityTypes,
+    mode === 'edit' ? initialValues.type : undefined,
+  )
   const {
     register,
     handleSubmit,
@@ -54,6 +62,8 @@ export function ActivityForm({
   })
   const endEdited = useRef(preserveEndOnStartChange)
   const [date, start, end] = useWatch({ control, name: ['date', 'start', 'end'] })
+  const type = useWatch({ control, name: 'type' })
+  const typeAvailable = options.some((option) => option.type === type)
   const range = parseTimeRange(date, start, end)
   const conflict = range.valid
     ? findOverlappingActivity(
@@ -79,9 +89,15 @@ export function ActivityForm({
           {...register('date')}
         />
         <Select label="Activity type" required error={errors.type?.message} {...register('type')}>
-          {activityTypes.map((type) => (
+          {!typeAvailable && (
+            <option value={type} disabled>
+              {activityMeta[type].label} · Choose an enabled type
+            </option>
+          )}
+          {options.map(({ type, isDisabled }) => (
             <option value={type} key={type}>
               {activityMeta[type].label}
+              {isDisabled ? ' (currently disabled)' : ''}
             </option>
           ))}
         </Select>
@@ -142,7 +158,7 @@ export function ActivityForm({
         </p>
         {conflict && (
           <p id={conflictId} className="time-conflict" role="alert">
-            {describeActivityConflict(conflict)}
+            {describeActivityConflict(conflict, (date) => formatTime(date, preferences.timeFormat))}
           </p>
         )}
         {error && (
@@ -171,7 +187,7 @@ export function ActivityForm({
           <Button variant="secondary" onClick={onCancel}>
             Cancel
           </Button>
-          <Button type="submit" loading={busy} disabled={Boolean(conflict)}>
+          <Button type="submit" loading={busy} disabled={Boolean(conflict) || !typeAvailable}>
             {busy
               ? mode === 'edit'
                 ? 'Updating…'

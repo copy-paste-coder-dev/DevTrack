@@ -89,7 +89,7 @@ test('calendar selects empty days, supports keyboard movement and resets its vis
   await expect(page.getByRole('heading', { name: 'Today', exact: true })).toBeVisible()
 })
 
-test('settings controls, custom categories and reset work without persistence', async ({
+test('settings controls save persistently and custom categories remain deferred', async ({
   page,
 }) => {
   await page.goto('/app/settings')
@@ -97,15 +97,13 @@ test('settings controls, custom categories and reset work without persistence', 
   await expect(toggle).toBeChecked()
   await toggle.click()
   await expect(toggle).not.toBeChecked()
-  await page.getByRole('button', { name: 'Add custom type' }).click()
-  await page.getByLabel('Custom activity type').fill('Architecture')
-  await page.getByRole('button', { name: 'Add', exact: true }).click()
-  await expect(page.getByRole('switch', { name: 'Enable Architecture' })).toBeChecked()
-  await page.getByRole('button', { name: 'Preview changes' }).click()
-  await expect(page.getByText('Preferences previewed')).toBeVisible()
-  await page.getByRole('button', { name: 'Reset preview' }).click()
+  await expect(page.getByRole('button', { name: 'Custom types · Coming later' })).toBeDisabled()
+  await page.getByRole('button', { name: 'Save changes' }).click()
+  await expect(page.getByText('Settings saved.')).toBeVisible()
+  await page.reload()
+  await expect(toggle).not.toBeChecked()
+  await page.getByRole('button', { name: 'Reset to defaults' }).click()
   await expect(toggle).toBeChecked()
-  await expect(page.getByRole('switch', { name: 'Enable Architecture' })).toHaveCount(0)
 })
 
 test('login disables future providers and signs in through the auth abstraction', async ({
@@ -171,13 +169,24 @@ test('loading skeletons and retryable error states render on every data screen',
   test.setTimeout(60000)
   for (const route of ['/app', '/app/calendar', '/app/settings']) {
     const name = route.split('/').at(-1)
+    if (route === '/app/settings')
+      await page.evaluate(() =>
+        localStorage.setItem('devtrack-e2e-preferences-options', JSON.stringify({ loading: true })),
+      )
     await page.goto(route + '?preview=loading')
     await expect(
       page.getByRole('status', { name: /^Loading (activity data|calendar data|settings)$/ }),
     ).toBeVisible()
     await expect(page.locator('.skeleton').first()).toBeVisible()
     await page.screenshot({ path: `artifacts/screenshots/${name}-loading.png`, fullPage: true })
-    if (route !== '/app/settings')
+    if (route === '/app/settings')
+      await page.evaluate(() =>
+        localStorage.setItem(
+          'devtrack-e2e-preferences-options',
+          JSON.stringify({ readError: 'unavailable' }),
+        ),
+      )
+    else
       await page.evaluate(() =>
         localStorage.setItem(
           'devtrack-e2e-activity-options',
@@ -187,11 +196,11 @@ test('loading skeletons and retryable error states render on every data screen',
     await page.goto(route + '?preview=error')
     await expect(page.getByRole('alert')).toBeVisible()
     await page.screenshot({ path: `artifacts/screenshots/${name}-error.png`, fullPage: true })
-    if (route !== '/app/settings')
-      await page.evaluate(() => localStorage.removeItem('devtrack-e2e-activity-options'))
+    if (route === '/app/settings')
+      await page.evaluate(() => localStorage.removeItem('devtrack-e2e-preferences-options'))
+    else await page.evaluate(() => localStorage.removeItem('devtrack-e2e-activity-options'))
     await page.getByRole('button', { name: 'Try again' }).click()
     await expect(page.getByRole('alert')).not.toBeVisible()
-    if (route === '/app/settings') await expect(page).not.toHaveURL(/preview=error/)
     await expect(page.getByRole('heading', { level: 1 })).toBeVisible()
   }
 })
@@ -213,17 +222,18 @@ test('calendar tabs support selection, arrow keys and return to month', async ({
   await expect(page.getByRole('heading', { name: 'October 2026' })).toBeVisible()
 })
 
-test('all-disabled activity types show an empty message and time format remains local', async ({
+test('all-disabled types cannot be saved and reset restores canonical preferences', async ({
   page,
 }) => {
   await page.goto('/app/settings')
-  await page.getByLabel('Time display format').selectOption('12')
-  await expect(page.getByLabel('Time display format')).toHaveValue('12')
+  await page.getByLabel('Time display format').selectOption('12h')
+  await expect(page.getByLabel('Time display format')).toHaveValue('12h')
   for (const toggle of await page.getByRole('switch').all()) await toggle.click()
-  await expect(page.getByText('No active activity types.')).toBeVisible()
-  await page.getByRole('button', { name: 'Reset preview' }).click()
-  await expect(page.getByText('No active activity types.')).not.toBeVisible()
-  await expect(page.getByLabel('Time display format')).toHaveValue('24')
+  await expect(page.getByText('Select at least one activity type.')).toBeVisible()
+  await expect(page.getByRole('button', { name: 'Save changes' })).toBeDisabled()
+  await page.getByRole('button', { name: 'Reset to defaults' }).click()
+  await expect(page.getByText('Select at least one activity type.')).not.toBeVisible()
+  await expect(page.getByLabel('Time display format')).toHaveValue('24h')
   await page.getByRole('button', { name: 'Logout', exact: true }).click()
   await expect(page).toHaveURL(/\/login/)
   await expect(page.getByText('Signed out successfully')).toBeVisible()

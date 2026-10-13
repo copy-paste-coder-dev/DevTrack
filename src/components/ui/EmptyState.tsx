@@ -5,10 +5,12 @@ export function EmptyState({
   onAdd,
   title = 'No activities logged for this day.',
   description = 'Make room for your first block of focused work.',
+  disabled = false,
 }: {
   onAdd: () => void
   title?: string
   description?: string
+  disabled?: boolean
 }) {
   return (
     <div className="empty-state">
@@ -17,7 +19,7 @@ export function EmptyState({
       </span>
       <h3>{title}</h3>
       <p>{description}</p>
-      <Button variant="secondary" onClick={onAdd}>
+      <Button variant="secondary" onClick={onAdd} disabled={disabled}>
         Log first activity
       </Button>
     </div>

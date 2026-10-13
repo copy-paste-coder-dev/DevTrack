@@ -14,9 +14,11 @@ import { useActivitiesByRange } from '../activities/hooks/useActivitiesByRange'
 import { getActivityDates, sumDurationMinutes } from '../activities/utils/activitySummary'
 import { getMonthDateRange } from '../../utils/date'
 import { formatDuration } from '../../utils/duration'
+import { useUserPreferences } from '../settings/hooks/useUserPreferences'
 
 type CalendarView = 'Month' | 'Week' | 'Day'
 export function CalendarPage() {
+  const preferences = useUserPreferences()
   const { selected, dateKey, selectDay } = useSelectedDay()
   const range = getMonthDateRange(selected)
   const monthData = useActivitiesByRange(range.startDateKey, range.endDateKey)
@@ -38,7 +40,7 @@ export function CalendarPage() {
             Today
           </Button>
           <Button
-            disabled={isLoading || Boolean(error)}
+            disabled={isLoading || Boolean(error) || preferences.isLoading}
             onClick={() => setDialog({ activity: null })}
           >
             <Plus size={17} />

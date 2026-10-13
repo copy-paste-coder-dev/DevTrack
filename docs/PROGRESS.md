@@ -54,10 +54,20 @@ Validation: 23 native tests, 24 emulator checks (including real production-servi
 
 PHASE 4 STATUS: COMPLETE
 
-## Pending details for later phases
+## Phase 5 implementation checkpoint
 
-1. **Phase 5 — persistent preferences:** store work hours, time format and enabled/custom types; apply preferences consistently across screens. Current controls are local previews that reset after leaving settings. Smart defaults temporarily use the centralized 09:00 preference.
+Implemented one authenticated Firestore preferences document at users/{uid}/settings/preferences, transactional default initialization/save, partial-document fallback, UID-keyed provider with one listener and cleanup, real RHF/Zod settings with save/reset/dirty/error states, saved smart starts/initial gaps, 12h/24h text, logged-time target/progress and enabled-type filtering that preserves existing disabled types. Removed production settings mocks/preview sources. Custom types remain Coming later. Read failure uses canonical defaults with warning/Retry so activity logging stays usable.
+
+All local checks pass: 31 native tests, 40 rules/production-service emulator checks and final full 52-scenario Chrome suite (two workers, four minutes), plus lint/build/format/whitespace checks. Cross-tab tests explicitly focus the saving tab; multi-route scenario timeout is 60 seconds to accommodate local Chrome under load. Responsive settings/12h views cover 390–1440px; existing screens/dialogs extend to 1920px. Owner/schema/audit settings rules were deployed to dev-track-46323; released source matches, activity index remains READY and 18 remote request-context evaluations pass. No dependency or activity schema change.
+
+Live completion remains pending: the user was asked to load defaults, save 08:30/17:30/12h with Meeting disabled, refresh and verify activity integration/session restoration. Final read-only CLI-account probes found no preferences document, so live initialization/persistence is not claimed. Multi-user tests are emulator/synthetic contexts; a second real Google account/device is unverified. No live preferences or activities were changed through agent probes. See [the 31-part Phase 5 report](PHASE_5_REPORT.md) for the exact remaining check. Implementation checkpoint commit is provided in the handoff; a completed-phase claim follows live results.
+
+PHASE 5 STATUS: INCOMPLETE
+
+## Pending details
+
+1. **Phase 5 — live verification:** confirm real default initialization, saving/refresh/logout/login, saved smart starts/format/type filtering and existing disabled-type editing. Implementation, local tests and rules deployment are finished. Arbitrary custom types are deferred by the Phase 5 scope.
 2. **Later scope:** functional Week/Day layouts, statistics/reports/export, timers, integrations, teams, AI, advanced offline behavior and hosting deployment. Week/Day placeholders satisfy the Phase 1 specification. Cross-midnight logging, server-enforced overlap concurrency and persisted timezone handling are deferred.
 3. **Additional validation:** real second-account isolation, physical devices, Edge/other browsers and new-account/mobile OAuth flows. Ownership is already tested through the emulator, live guest requests and remote Rules API contexts; these broader checks are not phase completion blockers.
 
-Phases 0–4 are complete. No mandatory Phase 4 work remains. No hosting deployment or remote Git push was performed. Live test entries remain for the user to keep or remove.
+Phases 0–4 are complete. Phase 5 implementation is committed with live verification pending. No hosting deployment or remote Git push was performed. The production preview is available at 127.0.0.1:5173; existing live activity entries were left intact.

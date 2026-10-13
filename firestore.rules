@@ -28,6 +28,20 @@ service cloud.firestore {
         && data.durationMinutes is int && data.durationMinutes > 0 && data.durationMinutes <= 1500
         && data.createdAt is timestamp && data.updatedAt == request.time;
     }
+    function validPreferences() {
+      let data = request.resource.data;
+      let fields = ['dayStartTime', 'dayEndTime', 'timeFormat', 'enabledActivityTypes', 'createdAt', 'updatedAt'];
+      return data.keys().hasAll(fields) && data.keys().hasOnly(fields)
+        && data.dayStartTime is string && data.dayStartTime.matches('^([01][0-9]|2[0-3]):[0-5][0-9]$')
+        && data.dayEndTime is string && data.dayEndTime.matches('^([01][0-9]|2[0-3]):[0-5][0-9]$')
+        && data.dayEndTime > data.dayStartTime
+        && data.timeFormat in ['12h', '24h']
+        && data.enabledActivityTypes is list && data.enabledActivityTypes.size() > 0
+        && data.enabledActivityTypes.size() <= 9
+        && data.enabledActivityTypes.toSet().size() == data.enabledActivityTypes.size()
+        && data.enabledActivityTypes.hasOnly(['jira_task', 'scrum_call', 'meeting', 'development', 'bug_fix', 'code_review', 'testing', 'break', 'other'])
+        && data.createdAt is timestamp && data.updatedAt == request.time;
+    }
     match /users/{userId} {
       allow get: if isOwner(userId);
       allow create: if isOwner(userId) && validProfile(userId)
@@ -47,8 +61,18 @@ service cloud.firestore {
             .hasOnly(['dateKey', 'activityType', 'taskName', 'status', 'startAt', 'endAt', 'durationMinutes', 'notes', 'updatedAt']);
         allow delete: if isOwner(userId);
       }
+      match /settings/{settingsId} {
+        allow get: if isOwner(userId) && settingsId == 'preferences';
+        allow create: if isOwner(userId) && settingsId == 'preferences' && validPreferences()
+          && request.resource.data.createdAt == request.time;
+        allow update: if isOwner(userId) && settingsId == 'preferences' && validPreferences()
+          && (('createdAt' in resource.data && request.resource.data.createdAt == resource.data.createdAt)
+            || (!('createdAt' in resource.data) && request.resource.data.createdAt == request.time))
+          && request.resource.data.diff(resource.data).affectedKeys().hasOnly(['dayStartTime', 'dayEndTime', 'timeFormat', 'enabledActivityTypes', 'createdAt', 'updatedAt']);
+        allow list, delete: if false;
+      }
     }
-    // Settings and every other collection remain unavailable.
+    // Every unlisted collection remains unavailable.
     match /{document=**} {
       allow read, write: if false;
     }

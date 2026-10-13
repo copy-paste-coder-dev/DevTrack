@@ -5,7 +5,8 @@ import { ActivityTypeBadge, ActivityTypeIcon } from './ActivityTypeIcon'
 import { activityMeta } from '../config/presentation'
 import type { Activity } from '../types/activity'
 import { formatDuration } from '../../../utils/duration'
-import { formatDisplayTime } from '../../../utils/date'
+import { formatTime } from '../../settings/utils/timeFormat'
+import { useUserPreferences } from '../../settings/hooks/useUserPreferences'
 
 export interface ActivityCardProps {
   activity: Activity
@@ -13,6 +14,9 @@ export interface ActivityCardProps {
   onDelete: (activity: Activity) => void
 }
 export function ActivityCard({ activity, onEdit, onDelete }: ActivityCardProps) {
+  const {
+    preferences: { timeFormat },
+  } = useUserPreferences()
   const meta = activityMeta[activity.activityType]
   return (
     <div className={`activity-block tone-${meta.color}`}>
@@ -25,8 +29,8 @@ export function ActivityCard({ activity, onEdit, onDelete }: ActivityCardProps) 
         <p>{activity.taskName}</p>
         <div className="activity-time">
           <span>
-            {formatDisplayTime(activity.startAt)} <span className="time-dash">—</span>{' '}
-            {formatDisplayTime(activity.endAt)}
+            {formatTime(activity.startAt, timeFormat)} <span className="time-dash">—</span>{' '}
+            {formatTime(activity.endAt, timeFormat)}
           </span>
           <span className="duration-chip">{formatDuration(activity.durationMinutes)}</span>
         </div>

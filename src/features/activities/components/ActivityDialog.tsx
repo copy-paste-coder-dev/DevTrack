@@ -9,7 +9,8 @@ import { mapFormToActivityInput, type ActivityFormValues } from '../validation/a
 import { getActivityErrorMessage } from '../utils/activityError'
 import { formatDisplayTime } from '../../../utils/date'
 import { buildCreateActivityDefaults, type ActivityGap } from '../domain/activityTime'
-import { getWorkdayPreferences } from '../../settings/workdayPreferences'
+import { useUserPreferences } from '../../settings/hooks/useUserPreferences'
+import { getDefaultActivityType } from '../../settings/utils/activityTypeOptions'
 
 export interface DialogSelection {
   activity: Activity | null
@@ -29,6 +30,7 @@ export function ActivityDialog({
   gap,
   onClose,
 }: ActivityDialogProps) {
+  const { preferences } = useUserPreferences()
   const [confirmDelete, setConfirmDelete] = useState(action === 'delete')
   const [error, setError] = useState<string | null>(null)
   const mutations = useActivityMutations()
@@ -45,12 +47,15 @@ export function ActivityDialog({
           end: formatDisplayTime(activity.endAt),
           notes: activity?.notes ?? '',
         }
-      : buildCreateActivityDefaults({
-          dateKey,
-          activities,
-          dayStartTime: getWorkdayPreferences().dayStartTime,
-          gap,
-        }),
+      : {
+          ...buildCreateActivityDefaults({
+            dateKey,
+            activities,
+            dayStartTime: preferences.dayStartTime,
+            gap,
+          }),
+          type: getDefaultActivityType(preferences.enabledActivityTypes),
+        },
   )
   const [startHint] = useState(() =>
     activity
@@ -66,6 +71,15 @@ export function ActivityDialog({
     setError(null)
     try {
       const input = mapFormToActivityInput(values)
+      if (
+        !preferences.enabledActivityTypes.includes(input.activityType) &&
+        input.activityType !== activity?.activityType
+      ) {
+        setError(
+          'Choose an enabled activity type. Your preferences changed while this form was open.',
+        )
+        return
+      }
       if (activity) await mutations.updateActivity(activity.id, input)
       else await mutations.createActivity(input)
       toast.success(activity ? 'Activity updated.' : 'Activity logged.')

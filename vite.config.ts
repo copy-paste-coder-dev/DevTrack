@@ -12,6 +12,14 @@ export default defineConfig(({ mode, command }) => {
     plugins: [react(), tailwindcss()],
     resolve: {
       alias: {
+        '#settings-service': fileURLToPath(
+          new URL(
+            mode === 'e2e'
+              ? './tests/support/settings.service.ts'
+              : './src/features/settings/services/settings.service.ts',
+            import.meta.url,
+          ),
+        ),
         '#activity-service': fileURLToPath(
           new URL(
             mode === 'e2e'
