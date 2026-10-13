@@ -53,6 +53,8 @@ firebase deploy --only firestore:rules,firestore:indexes --project YOUR_DEVELOPM
 
 `firebase deploy --only firestore:rules` deploys only rules. `firebase.json` references both repository files without hardcoded credentials or a project ID. No CLI installation/authentication is required to run the app.
 
+If the CLI reports expired credentials or HTTP 401, run `firebase login --reauth --interactive` and complete Google authorization yourself, using an account with access to the intended project. Then retry the explicit-project command. App Google sign-in and Firebase CLI sign-in are separate sessions. Never paste a password, access token or authorization code into chat.
+
 Firebase factories validate configuration before initialization. Missing configuration produces a safe login setup error; developer diagnostics name missing variables. Vite web config is client-visible; never put Admin SDK/private credentials in it. Actual environment files stay out of Git.
 
 ## Authentication and profiles
@@ -111,6 +113,14 @@ Common fixes: unauthorized-domain → add the exact browser hostname; operation-
 ## Tests and formatting
 
 `npm test` runs native Node tests for config/auth/profile and activity date/duration/schema/mapper/summary helpers. These do not contact a backend.
+
+The rules suite uses the real client SDK against the local Firestore emulator and the checked-in rules. It covers owner CRUD, daily/monthly queries, audit fields, invalid writes, guest/cross-user denial and profile restrictions. Install Firebase CLI and Java 21+, then run:
+
+```sh
+firebase emulators:exec --only firestore --project demo-devtrack "npm run test:rules"
+```
+
+The emulator binds to `127.0.0.1:8085`. Tests require a loopback `FIRESTORE_EMULATOR_HOST` and hardcode the demo project; they cannot use the app's real Firebase configuration. `npm run test:rules` alone requires an already running emulator and that environment variable. Emulator results verify local rules enforcement, not deployed rules or production index readiness. See [Firebase's rules testing documentation](https://firebase.google.com/docs/firestore/security/test-rules-emulator).
 
 `npm run test:e2e` runs locally installed Chrome against Vite's isolated `e2e` mode, with synthetic auth/activity services and fixed browser date/time. Default test port is 5174; if occupied, use another free port:
 

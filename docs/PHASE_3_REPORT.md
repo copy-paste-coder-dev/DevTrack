@@ -1,6 +1,6 @@
 # Phase 3 activity persistence report
 
-Date: October 12, 2026. The real Firestore implementation is ready. Live CRUD, index availability and deployed rules enforcement are still unverified; this phase is incomplete.
+Updated: October 13, 2026. The real Firestore implementation and local rules verification are ready. Live CRUD, index availability and deployed rules enforcement are still unverified; this phase is incomplete. Implementation checkpoint: `7960598`.
 
 ## 1. Phase 1/2 architecture audit
 
@@ -58,7 +58,7 @@ combineDateAndTime builds a local Date from numeric year/month/day/hour/minute c
 
 ## 14. Rules changes
 
-Existing owner profile rules remain. A nested activity match allows get/list/create/update/delete only for the matching authenticated path UID. Writes require the exact ten fields, supported enums, bounded string lengths, dateKey format, ordered Timestamp values, positive bounded integer duration and server updatedAt. Creates require server createdAt; updates preserve it and limit changed keys to mutable fields. All other paths/settings remain denied. No public allow rule was added. Rules do not implement overlap checks or local-timezone date matching. Compilation/deployment and actual guest/non-owner denial remain unverified.
+Existing owner profile rules remain. A nested activity match allows get/list/create/update/delete only for the matching authenticated path UID. Writes require the exact ten fields, supported enums, bounded string lengths, dateKey format, ordered Timestamp values, positive bounded integer duration and server updatedAt. Creates require server createdAt; updates preserve it and limit changed keys to mutable fields. All other paths/settings remain denied. No public allow rule was added. Rules do not implement overlap checks or local-timezone date matching. Compilation and owner/guest/non-owner enforcement pass in the local emulator; deployment and remote enforcement remain unverified.
 
 ## 15. Indexes
 
@@ -82,6 +82,7 @@ src/features/activities/utils/activityError.ts
 src/features/activities/utils/activitySummary.ts
 src/features/activities/validation/activity.schema.ts
 tests/activity.test.mjs
+tests/rules/firestore.test.mjs
 tests/e2e/activities.spec.ts
 tests/support/activities.fixture.ts
 tests/support/activity.service.ts
@@ -111,7 +112,11 @@ Every remaining blocker:
 5. Validate deployed rules deny guests/cross-user get/list/writes and reject invalid/immutable-field writes; source ownership rules alone are not proof.
 6. Inspect live operation for SDK/runtime warnings/errors and complete remaining Phase 2 profile/relogin/refresh/logout checks.
 
-Setup, deployment and the exact manual sequence are in README. A connected Firebase project capability or user-run Console/live checks is needed to finish these external steps. Repository work is checkpointed separately; an incomplete checkpoint is not a completed-phase claim.
+October 13 follow-up: installed official Firebase CLI 15.33.0 under ignored artifacts, leaving application dependencies and the lockfile unchanged. All six web settings are present and identify development project dev-track-46323. The CLI has a saved account, but its refresh credentials are expired: the database-list request returned HTTP 401 UNAUTHENTICATED. Started an interactive localhost-callback reauthentication and asked the user to complete Google authorization. No successful callback has arrived. CLI authentication is separate from the app's observed Google session. No remote rules/index deployment or database change was performed.
+
+Computer Use also stopped this turn because it could not determine the Windows browser URL with enough confidence to enforce policy. No further UI actions were issued. The authentication prohibition quoted above requires user account selection/approval; repeating authorization to proceed does not supply a successful Google login.
+
+Setup, deployment and the exact manual sequence are in README. A successful CLI reauthentication or connected project capability is needed for remote deployment, followed by live client verification. Repository work is checkpointed separately; an incomplete checkpoint is not a completed-phase claim.
 
 ## 20. Multi-date results
 
@@ -133,9 +138,11 @@ PASS: strict TypeScript plus Vite production build. No build/CSS/chunk warnings.
 
 Native tests: 14 passed (seven existing configuration/auth/profile tests and seven activity date/duration/validation/mapper/summary/error tests). Final complete browser suite: **34 passed in 2.6 minutes**, with workspace edits paused. An earlier test-adapter error-state simulation was corrected to use an explicit read-error setting. A later settings-toggle test captured state resetting while documentation was edited alongside Vite; pausing edits for the final run resolved that interference without changing settings behavior. Synthetic browser tests cover CRUD flows, field retention/retry, duplicate saving, basic validation/offline feedback, date moves, refresh, month queries, listener cleanup, auth regressions, settings previews and six viewports. They do not contact Firebase and cannot prove remote CRUD or rules. Formatting and git diff whitespace checks pass; production assets contain no synthetic adapter/user identifiers.
 
+October 13 rules suite: **23 checks passed in 13.5 seconds** against Firestore emulator 1.22.0, CLI 15.33.0 and a checksum-verified portable Temurin Java 21 runtime. The runtime/CLI downloads stay in ignored artifacts; system Java is unchanged. The emulator compiled the repository rules. Tests use the actual Firebase web client with emulator-only mock authentication, not Admin access or the synthetic UI service. Valid owner create/read/update/date move/delete, daily/monthly query filtering, server audit timestamps and immutable createdAt passed. Guest and other-user get/list/create/update/delete were denied. Invalid fields, unsupported enums, missing/extra fields, invalid timestamp ordering, invalid durations and forged audit values were denied. Owner profile updates preserve createdAt; guest/cross-user access, user listing/deletion, settings and unrelated paths were denied. Expected denial warnings appear in ignored emulator logs. The demo project and loopback-only host prevent accidental live test writes. The emulator does not establish remote composite index readiness. Lint, production build, formatting and whitespace checks and the 14 existing native tests passed again after these additions. The build emitted a plugin-timing profiling notice, with no build failure. The existing 34-scenario browser result above is from the implementation checkpoint; it was not rerun for these rules/test/documentation-only changes.
+
 ## 25. Known limitations
 
-External blockers above remain mandatory. Rules are source-reviewed, not compiled through an emulator; no Admin credentials were used. Firestore listeners may reflect SDK local pending writes; a success toast waits for the server-acknowledged write promise. Known-offline saves are rejected, but a network drop after submission may keep the dialog pending until reconnection. There is no advanced offline queue UI. Single-day activities and browser-local display are supported. No overlap restrictions, pagination, optimistic rollback framework or persisted goals/settings were introduced.
+External blockers above remain mandatory. Rules compile and pass local emulator checks but are not verified remotely; no Admin credentials were used. Firestore listeners may reflect SDK local pending writes; a success toast waits for the server-acknowledged write promise. Known-offline saves are rejected, but a network drop after submission may keep the dialog pending until reconnection. There is no advanced offline queue UI. Single-day activities and browser-local display are supported. No overlap restrictions, pagination, optimistic rollback framework or persisted goals/settings were introduced.
 
 ## 26. Deferred Phase 4+
 
@@ -154,6 +161,7 @@ Previous-end start defaults, overlap prevention, day-start preferences, advanced
 - [x] Local date/time/duration/summary helpers tested; lint/build pass.
 - [x] README deployment/live tests and completed/pending report prepared.
 - [x] Final complete browser suite: 34 passed.
+- [x] Rules compile and 23 emulator checks pass; reproducible test command documented.
 - [ ] Remote rules/index deployed and observed query error resolved.
 - [ ] Real Firestore CRUD/refresh/date-range/multi-date/audit behavior verified.
 - [ ] Guest/cross-user/invalid-write security enforcement verified remotely.

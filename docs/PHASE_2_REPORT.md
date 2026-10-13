@@ -146,4 +146,6 @@ Phase 3: real activity CRUD, queries and activity rules. Phase 4: smart start ti
 
 Follow-up during Phase 3: native browser observation at http://127.0.0.1:5173/app showed the real authenticated account in the shell. No new OAuth popup, profile lifecycle/relogin, refresh or logout test was performed. Full Phase 2 status therefore remains incomplete. Implementation was saved as checkpoint commit `34bef16` before Phase 3 changes. Phase 3 now extends activity rules and data paths; the profile-only descriptions above record the Phase 2 checkpoint.
 
+October 13 follow-up: official Firebase CLI is now available in ignored artifacts, but its saved login has expired (HTTP 401). Interactive reauthentication awaits the user's Google authorization. The Phase 3 emulator suite now verifies profile ownership, allowed owner updates, immutable createdAt and denied guest/cross-user/list/delete access. This verifies local rules, not the live Google/profile/logout lifecycle; see [the Phase 3 report](PHASE_3_REPORT.md).
+
 PHASE 2 STATUS: INCOMPLETE

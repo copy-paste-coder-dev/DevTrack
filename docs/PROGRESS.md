@@ -42,6 +42,8 @@ Local checks: lint, production build, formatting and whitespace checks pass; 14 
 
 Live Chrome showed the real account in /app and the Firestore index/configuration error. Browser input failed with coordinate input geometry is unavailable, then click_element timeout after a refreshed observation. No rule/index deployment or actual backend CRUD success is claimed. Remaining: publish/review rules, enable the defined index, verify remote create/read/update/date move/delete/refresh/month queries/audit fields and guest/cross-user denial. See [the 27-part Phase 3 report](PHASE_3_REPORT.md) and README's live checklist. The phase remains incomplete despite its implementation checkpoint.
 
+October 13 follow-up: installed official Firebase CLI 15.33.0 and a checksum-verified portable Java 21 runtime into ignored artifacts. Added a demo-project emulator command and real client rules suite: **23 checks pass**, covering owner CRUD/date queries/audit fields, guest/cross-user denial, invalid writes and profile restrictions. Lint and the 14 native tests pass again. No application dependency or system Java change. Local rules compilation/enforcement is now verified; remote deployment is still pending. CLI credentials are expired and database listing returned HTTP 401. Interactive reauthentication is waiting for the user's Google authorization. Computer Use stopped because Windows browser URL detection was insufficient; no further UI actions were attempted. Implementation checkpoint: `7960598`.
+
 PHASE 3 STATUS: INCOMPLETE
 
 ## Pending details for later phases
