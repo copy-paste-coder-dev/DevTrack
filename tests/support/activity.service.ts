@@ -111,6 +111,13 @@ function subscribe(
   }
 }
 export const activityService: ActivityService = {
+  async getRecentActivities(uid) {
+    const settings = JSON.parse(localStorage.getItem('devtrack-e2e-activity-options') ?? '{}')
+    if (settings.recentDelay)
+      await new Promise((resolve) => setTimeout(resolve, settings.recentDelay))
+    if (settings.recentError || settings.readError) throw { code: 'unavailable' }
+    return [...read(uid)].sort((a, b) => b.startAt.getTime() - a.startAt.getTime()).slice(0, 30)
+  },
   async createActivity(uid, input) {
     await beforeMutation()
     assertActivityCanSave(activityInputSchema.parse(input), read(uid))

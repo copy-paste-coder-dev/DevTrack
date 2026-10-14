@@ -5,8 +5,12 @@ import './styles/globals.css'
 import './styles/workspace.css'
 import './styles/components.css'
 import './styles/auth.css'
+import './styles/analytics.css'
+import './styles/productivity.css'
 
-createRoot(document.getElementById('root')!).render(
+const root = document.getElementById('root')
+if (!root) throw new Error('DevTrack requires a root element in index.html.')
+createRoot(root).render(
   <StrictMode>
     <App />
   </StrictMode>,

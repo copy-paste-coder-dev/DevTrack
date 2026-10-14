@@ -1,4 +1,4 @@
-import { test, expect } from '../support/test'
+import { test, expect, closeActivityDialog } from '../support/test'
 
 test('app routes render and navigation works without runtime errors', async ({ page }) => {
   const errors: string[] = []
@@ -23,6 +23,7 @@ for (const viewport of [
   { width: 430, height: 932 },
   { width: 768, height: 1024 },
   { width: 1024, height: 768 },
+  { width: 1366, height: 768 },
   { width: 1440, height: 900 },
   { width: 1920, height: 1080 },
 ]) {
@@ -70,7 +71,7 @@ for (const viewport of [
     await page.getByRole('button', { name: 'Save activity' }).scrollIntoViewIfNeeded()
     await expect(page.getByRole('button', { name: 'Save activity' })).toBeInViewport()
     await page.screenshot({ path: `artifacts/screenshots/dialog-${width}.png` })
-    await page.keyboard.press('Escape')
+    await closeActivityDialog(page)
     await expect(dialog).not.toBeVisible()
   })
 }

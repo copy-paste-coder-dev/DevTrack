@@ -1,4 +1,4 @@
-import { test, expect } from '../support/test'
+import { test, expect, closeActivityDialog } from '../support/test'
 import type { Page } from '@playwright/test'
 
 async function emptyStore(page: Page) {
@@ -90,22 +90,23 @@ test('Phase 4 ten-step smart timeline flow, create/edit conflicts, gap repair an
   await end(page).fill('11:30')
   await expect(page.getByRole('alert')).toContainText('Filled gap')
   await expect(page.getByRole('button', { name: 'Update activity' })).toBeDisabled()
-  await page.keyboard.press('Escape')
+  await closeActivityDialog(page)
   await page
     .locator('.timeline-item')
     .filter({ has: page.getByText('Third', { exact: true }) })
-    .getByRole('button', { name: 'Delete Development' })
+    .getByRole('button', { name: 'More actions for Third' })
     .click()
+  await page.getByRole('menuitem', { name: 'Delete', exact: true }).click()
   await page.getByRole('button', { name: 'Delete', exact: true }).click()
   await expect(page.getByRole('dialog')).not.toBeVisible()
   await add(page)
   await expect(start(page)).toHaveValue('12:00')
-  await page.keyboard.press('Escape')
+  await closeActivityDialog(page)
   await page.goto('/app/calendar?date=2026-10-14')
   await add(page)
   await expect(page.getByLabel(/^Date/)).toHaveValue('2026-10-14')
   await expect(start(page)).toHaveValue('09:00')
-  await page.keyboard.press('Escape')
+  await closeActivityDialog(page)
   await page.goto('/app/calendar?date=2026-10-15')
   await add(page)
   await expect(start(page)).toHaveValue('12:00')
@@ -142,7 +143,7 @@ test('end suggestion respects manual edits and midnight; realtime updates preser
   await expect(page.getByLabel('Task / activity name')).toHaveValue('Keep draft')
   await expect(start(page)).toHaveValue('10:15')
   await expect(page.getByRole('alert')).toContainText('Other interaction')
-  await page.keyboard.press('Escape')
+  await closeActivityDialog(page)
   await add(page)
   await expect(start(page)).toHaveValue('11:00')
   await start(page).fill('23:45')

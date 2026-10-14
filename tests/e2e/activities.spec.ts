@@ -63,9 +63,10 @@ test('create, refresh, edit date/status/time, calendar markers and delete stay c
     page.getByRole('button', { name: 'Monday, October 12, 2026', exact: true }),
   ).toBeVisible()
   await expect(page.locator('.duration-chip')).toHaveText('2h')
-  await page.getByRole('button', { name: 'Delete Jira Task', exact: true }).click()
+  await page.getByRole('button', { name: 'More actions for Moved task', exact: true }).click()
+  await page.getByRole('menuitem', { name: 'Delete', exact: true }).click()
   await page.getByRole('button', { name: 'Delete', exact: true }).click()
-  await expect(page.getByText('No activities logged for this day.')).toBeVisible()
+  await expect(page.getByText('No activities planned/logged for this day.')).toBeVisible()
   await expect(
     page.getByRole('button', { name: 'Tuesday, October 13, 2026', exact: true }),
   ).toBeVisible()
@@ -143,7 +144,8 @@ test('update and delete errors keep their dialogs open and permit retry', async 
   await page.evaluate(() => localStorage.removeItem('devtrack-e2e-activity-options'))
   await page.getByRole('button', { name: 'Update activity' }).click()
   await expect(page.getByRole('dialog')).not.toBeVisible()
-  await page.getByRole('button', { name: 'Delete Development', exact: true }).click()
+  await page.getByRole('button', { name: 'More actions for Retry update', exact: true }).click()
+  await page.getByRole('menuitem', { name: 'Delete', exact: true }).click()
   await page.evaluate(() =>
     localStorage.setItem(
       'devtrack-e2e-activity-options',
@@ -172,7 +174,7 @@ test('range reads change with visible month; listener cleanup follows routes and
   await expect(page.locator('.calendar-dots')).toHaveCount(3)
   await page.goto('/app')
   await expect(page.locator('.timeline-item')).toHaveCount(6)
-  expect(await page.evaluate(() => sessionStorage.getItem('devtrack-e2e-listeners'))).toBe('2')
+  expect(await page.evaluate(() => sessionStorage.getItem('devtrack-e2e-listeners'))).toBe('1')
   await page.getByRole('link', { name: 'Settings', exact: true }).click()
   await expect(page.getByRole('heading', { name: 'Settings', exact: true })).toBeVisible()
   expect(await page.evaluate(() => sessionStorage.getItem('devtrack-e2e-listeners'))).toBe('0')

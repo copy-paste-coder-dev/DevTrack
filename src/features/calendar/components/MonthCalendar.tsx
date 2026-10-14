@@ -1,4 +1,4 @@
-import { type KeyboardEvent } from 'react'
+import { useLayoutEffect, type KeyboardEvent, type RefObject } from 'react'
 import {
   addDays,
   addMonths,
@@ -8,30 +8,45 @@ import {
   format,
   isSameDay,
   isSameMonth,
-  isToday,
   startOfMonth,
   startOfWeek,
 } from 'date-fns'
 import { ChevronLeft, ChevronRight } from 'lucide-react'
 import { Button } from '../../../components/ui/Button'
 import { toDateKey } from '../../../utils/date'
+import type { DailyAnalysis } from '../../analytics/types/analytics'
+import { getCalendarDayMeta } from '../../analytics/domain/monthAnalysis'
+import { getDayStateLabel } from '../../analytics/domain/dailyAnalysis'
+import { formatDuration } from '../../../utils/duration'
 
 interface MonthCalendarProps {
   selected: Date
   onSelect: (date: Date) => void
   expanded?: boolean
-  activityDates: Readonly<Record<string, string>>
+  dayAnalyses: Readonly<Record<string, DailyAnalysis>>
+  todayKey: string
   month: Date
   onMonthChange: (date: Date) => void
+  focusRequest: RefObject<string | null>
 }
 export function MonthCalendar({
   selected,
   onSelect,
   expanded = false,
-  activityDates,
+  dayAnalyses,
+  todayKey,
   month,
   onMonthChange,
+  focusRequest: focusRequestRef,
 }: MonthCalendarProps) {
+  const selectedKey = toDateKey(selected)
+  // Month queries briefly render a skeleton. Keep the keyboard request in the
+  // parent so focus can be restored when this calendar mounts with the new data.
+  useLayoutEffect(() => {
+    if (focusRequestRef.current !== selectedKey) return
+    document.getElementById(`day-${expanded ? 'large' : 'small'}-${selectedKey}`)?.focus()
+    focusRequestRef.current = null
+  }, [selectedKey, expanded, focusRequestRef])
   const days = eachDayOfInterval({
     start: startOfWeek(startOfMonth(month), { weekStartsOn: 1 }),
     end: endOfWeek(endOfMonth(month), { weekStartsOn: 1 }),
@@ -39,6 +54,7 @@ export function MonthCalendar({
   const weekdays = ['Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat', 'Sun']
 
   function selectWithKeyboard(event: KeyboardEvent<HTMLButtonElement>, day: Date) {
+    if (event.altKey || event.ctrlKey || event.metaKey || event.shiftKey) return
     const increments: Record<string, number> = {
       ArrowLeft: -1,
       ArrowRight: 1,
@@ -49,11 +65,8 @@ export function MonthCalendar({
     if (amount === undefined) return
     event.preventDefault()
     const next = addDays(day, amount)
-    onMonthChange(startOfMonth(next))
+    focusRequestRef.current = toDateKey(next)
     onSelect(next)
-    requestAnimationFrame(() =>
-      document.getElementById(`day-${expanded ? 'large' : 'small'}-${toDateKey(next)}`)?.focus(),
-    )
   }
 
   return (
@@ -65,7 +78,7 @@ export function MonthCalendar({
             variant="ghost"
             className="icon-button"
             aria-label="Previous month"
-            onClick={() => onMonthChange(addMonths(month, -1))}
+            onClick={() => onMonthChange(addMonths(selected, -1))}
           >
             <ChevronLeft size={16} />
           </Button>
@@ -73,7 +86,7 @@ export function MonthCalendar({
             variant="ghost"
             className="icon-button"
             aria-label="Next month"
-            onClick={() => onMonthChange(addMonths(month, 1))}
+            onClick={() => onMonthChange(addMonths(selected, 1))}
           >
             <ChevronRight size={16} />
           </Button>
@@ -87,14 +100,22 @@ export function MonthCalendar({
         ))}
         {days.map((day) => {
           const key = toDateKey(day)
-          const hasActivities = Boolean(activityDates[key])
+          const analysis = dayAnalyses[key]
+          const meta = getCalendarDayMeta(key, toDateKey(selected), todayKey, analysis)
+          const hasActivities = meta.activityCount > 0
+          const details = analysis
+            ? `${getDayStateLabel(analysis)}. ${meta.activityCount} activities. ${formatDuration(meta.loggedMinutes)} logged. ${Math.round(meta.completionPercent)}% of workday. ${formatDuration(analysis.gapMinutes)} gaps.`
+            : 'Choose this date to load its activity.'
           return (
             <button
               key={key}
               id={`day-${expanded ? 'large' : 'small'}-${key}`}
               type="button"
-              className={`calendar-day ${isSameMonth(day, month) ? '' : 'outside'} ${isSameDay(day, selected) ? 'selected' : ''} ${isToday(day) ? 'is-today' : ''}`}
+              className={`calendar-day state-${meta.state} ${isSameMonth(day, month) ? '' : 'outside'} ${meta.isSelected ? 'selected' : ''} ${meta.isToday ? 'is-today' : ''}`}
               aria-label={`${format(day, 'EEEE, MMMM d, yyyy')}${hasActivities ? ', activities' : ''}`}
+              aria-description={details}
+              aria-current={meta.isToday ? 'date' : undefined}
+              title={`${format(day, 'MMM d')}: ${details}`}
               aria-pressed={isSameDay(day, selected)}
               onClick={() => onSelect(day)}
               onKeyDown={(event) => selectWithKeyboard(event, day)}
@@ -103,12 +124,12 @@ export function MonthCalendar({
               {hasActivities && (
                 <span className="calendar-dots">
                   <i />
-                  <i />
-                  <i />
+                  {meta.state === 'target_met' && <span aria-hidden="true">✓</span>}
+                  {meta.state === 'over_target' && <span aria-hidden="true">+</span>}
                 </span>
               )}
               {expanded && hasActivities && (
-                <span className="day-total">{activityDates[key]} logged</span>
+                <span className="day-total">{formatDuration(meta.loggedMinutes)}</span>
               )}
             </button>
           )
@@ -117,9 +138,11 @@ export function MonthCalendar({
       {expanded && (
         <div className="calendar-legend">
           <span>
-            <i /> Activity logged
+            <i /> Logged / partial
           </span>
-          <span>Use arrow keys to move between days</span>
+          <span>✓ Target met</span>
+          <span>+ Over target</span>
+          <span>○ Today</span>
         </div>
       )}
     </section>

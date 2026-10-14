@@ -1,80 +1,70 @@
-import { ArrowDownRight, ArrowUpRight, Clock3, Coffee } from 'lucide-react'
+import { Clock3 } from 'lucide-react'
 import { Card } from '../../../components/ui/Card'
-import type { DaySummaryData } from '../types/activity'
 import { formatDuration } from '../../../utils/duration'
 import { useUserPreferences } from '../../settings/hooks/useUserPreferences'
-import { formatTimeString } from '../../settings/utils/timeFormat'
-import {
-  calculateRemainingWorkMinutes,
-  calculateWorkdayMinutes,
-  calculateWorkdayProgress,
-} from '../../settings/utils/workday'
+import { formatTime, formatTimeString } from '../../settings/utils/timeFormat'
+import type { DailyAnalysis } from '../../analytics/types/analytics'
+import { getDayStateLabel } from '../../analytics/domain/dailyAnalysis'
 
 export function DaySummary({
-  startTime,
-  endTime,
-  loggedMinutes,
-  workMinutes,
-  breakMinutes,
-}: DaySummaryData) {
+  analysis,
+  className = '',
+}: {
+  analysis: DailyAnalysis
+  className?: string
+}) {
   const { preferences, isLoading } = useUserPreferences()
-  const target = calculateWorkdayMinutes(preferences.dayStartTime, preferences.dayEndTime)
-  const remaining = calculateRemainingWorkMinutes({
-    totalLoggedMinutes: loggedMinutes,
-    ...preferences,
-  })
-  const progress = calculateWorkdayProgress(loggedMinutes, target)
+  const time = (date: Date | null) => (date ? formatTime(date, preferences.timeFormat) : '—')
   return (
-    <Card className="day-summary">
+    <Card className={`day-summary ${className}`}>
       <div className="section-heading">
         <h2>Day at a glance</h2>
         <Clock3 size={16} aria-hidden="true" />
       </div>
+      <span className={`day-state state-${analysis.dayState}`}>{getDayStateLabel(analysis)}</span>
       <dl>
         <div>
-          <dt>
-            <ArrowUpRight size={13} />
-            Work start
-          </dt>
-          <dd>{startTime ? formatTimeString(startTime, preferences.timeFormat) : '—'}</dd>
-        </div>
-        <div>
-          <dt>
-            <ArrowDownRight size={13} />
-            Work end
-          </dt>
-          <dd>{endTime ? formatTimeString(endTime, preferences.timeFormat) : '—'}</dd>
-        </div>
-        <div>
-          <dt>
-            <Clock3 size={13} />
-            Total logged
-          </dt>
-          <dd>{formatDuration(loggedMinutes)}</dd>
-        </div>
-        <div>
-          <dt>
-            <Coffee size={13} />
-            Break time
-          </dt>
-          <dd>{formatDuration(breakMinutes)}</dd>
-        </div>
-        <div>
-          <dt>Work time</dt>
-          <dd>{formatDuration(workMinutes)}</dd>
+          <dt>Logged</dt>
+          <dd>{formatDuration(analysis.totalLoggedMinutes)}</dd>
         </div>
         {!isLoading && (
           <div>
             <dt>Remaining to target</dt>
-            <dd>{formatDuration(remaining)}</dd>
+            <dd>{formatDuration(analysis.remainingTargetMinutes)}</dd>
           </div>
         )}
+        <div>
+          <dt>Unlogged gaps</dt>
+          <dd>
+            {analysis.gapCount} · {formatDuration(analysis.gapMinutes)}
+          </dd>
+        </div>
+        <div>
+          <dt>Actual start</dt>
+          <dd>{time(analysis.actualStart)}</dd>
+        </div>
+        <div>
+          <dt>Actual end</dt>
+          <dd>{time(analysis.actualEnd)}</dd>
+        </div>
+        <div>
+          <dt>Activities completed</dt>
+          <dd>
+            {analysis.completedCount} / {analysis.activityCount}
+          </dd>
+        </div>
       </dl>
+      <p className="day-status-counts">
+        {analysis.inProgressCount} in progress · {analysis.onHoldCount} on hold ·{' '}
+        {analysis.openCount} open
+      </p>
       {!isLoading && (
-        <div className="workday-progress">
+        <div
+          className={`workday-progress ${analysis.isTargetMet && !analysis.isFuture ? 'target-reached' : ''}`}
+        >
           <p>
-            <span>{formatDuration(target)} workday target</span>
-            <strong>{Math.round(progress)}%</strong>
+            <span>Workday progress</span>
+            <strong>{Math.round(analysis.completionPercent)}%</strong>
           </p>
           <div
             className="progress-track"
@@ -82,12 +72,39 @@ export function DaySummary({
             aria-label="Workday logged-time progress"
             aria-valuemin={0}
             aria-valuemax={100}
-            aria-valuenow={Math.round(progress)}
+            aria-valuenow={Math.round(analysis.progressPercent)}
+            aria-valuetext={`${formatDuration(analysis.totalLoggedMinutes)} of ${formatDuration(analysis.workdayTargetMinutes)} logged`}
           >
-            <span style={{ width: `${progress}%` }} />
+            <span style={{ width: `${analysis.progressPercent}%` }} />
           </div>
-          <p className="field-hint">Target uses all logged time, including breaks.</p>
+          <p>
+            <span>
+              {formatDuration(analysis.totalLoggedMinutes)} /{' '}
+              {formatDuration(analysis.workdayTargetMinutes)}
+            </span>
+            {analysis.isTargetMet && !analysis.isFuture && <strong>Target met</strong>}
+          </p>
+          {analysis.overtimeMinutes > 0 && (
+            <p className="overtime-note">
+              +{formatDuration(analysis.overtimeMinutes)}{' '}
+              {analysis.isFuture ? 'over target logged' : 'overtime'}
+            </p>
+          )}
+          <p className="field-hint">
+            Configured: {formatTimeString(analysis.configuredStartTime, preferences.timeFormat)}–
+            {formatTimeString(analysis.configuredEndTime, preferences.timeFormat)}. Target includes
+            breaks.
+          </p>
+          <p className="field-hint">
+            Gaps include time before the first activity and between activities; remaining is target
+            minus logged time.
+          </p>
         </div>
+      )}
+      {analysis.invalidActivityCount > 0 && (
+        <p role="status">
+          {analysis.invalidActivityCount} invalid activities excluded from analysis.
+        </p>
       )}
     </Card>
   )

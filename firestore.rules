@@ -19,13 +19,16 @@ service cloud.firestore {
       let data = request.resource.data;
       let fields = ['dateKey', 'activityType', 'taskName', 'status', 'startAt', 'endAt', 'durationMinutes', 'notes', 'createdAt', 'updatedAt'];
       return data.keys().hasAll(fields) && data.keys().hasOnly(fields)
-        && data.dateKey is string && data.dateKey.matches('^[1-9][0-9]{3}-[0-9]{2}-[0-9]{2}$')
+        && data.dateKey is string && data.dateKey.matches('^[1-9][0-9]{3}-(0[1-9]|1[0-2])-(0[1-9]|[12][0-9]|3[01])$')
         && data.activityType in ['jira_task', 'scrum_call', 'meeting', 'development', 'bug_fix', 'code_review', 'testing', 'break', 'other']
         && data.status in ['in_progress', 'on_hold', 'completed']
-        && data.taskName is string && data.taskName.size() > 0 && data.taskName.size() <= 160
+        && data.taskName is string && data.taskName.matches('[\\s\\S]*[^\\s][\\s\\S]*') && data.taskName.size() <= 160
         && data.notes is string && data.notes.size() <= 1000
         && data.startAt is timestamp && data.endAt is timestamp && data.endAt > data.startAt
-        && data.durationMinutes is int && data.durationMinutes > 0 && data.durationMinutes <= 1500
+        && data.durationMinutes is int && data.durationMinutes > 0 && data.durationMinutes < 1440
+        && data.startAt.seconds() % 60 == 0 && data.startAt.nanos() == 0
+        && data.endAt.seconds() % 60 == 0 && data.endAt.nanos() == 0
+        && data.endAt.toMillis() - data.startAt.toMillis() == data.durationMinutes * 60000
         && data.createdAt is timestamp && data.updatedAt == request.time;
     }
     function validPreferences() {

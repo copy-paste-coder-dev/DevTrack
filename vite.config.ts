@@ -9,6 +9,10 @@ export default defineConfig(({ mode, command }) => {
       'E2E authentication is restricted to the local test server. Production builds must use real Firebase.',
     )
   return {
+    build: { sourcemap: false },
+    server: {
+      watch: { ignored: ['**/docs/**', '**/artifacts/**', '**/test-results/**', '**/*.md'] },
+    },
     plugins: [react(), tailwindcss()],
     resolve: {
       alias: {

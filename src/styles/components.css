@@ -87,21 +87,6 @@
 .calendar-tabs button:hover {
   background: var(--color-surface-elevated);
 }
-.calendar-view-placeholder {
-  padding: 60px 25px;
-  display: flex;
-  flex-direction: column;
-  align-items: center;
-  gap: 18px;
-  text-align: center;
-}
-.calendar-view-placeholder > svg {
-  color: var(--color-secondary);
-}
-.calendar-view-placeholder p {
-  max-width: 340px;
-  font-size: 12px;
-}
 .settings-empty {
   margin-block: 16px;
   padding: 16px;

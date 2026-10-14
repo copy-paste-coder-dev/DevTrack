@@ -15,9 +15,10 @@ export function Dialog({ title, eyebrow, onClose, children, busy = false }: Dial
     const previousFocus = document.activeElement
     const element = dialog.current
     element?.showModal()
+    element?.querySelector<HTMLElement>('[data-autofocus]')?.focus()
     return () => {
       element?.close()
-      if (previousFocus instanceof HTMLElement) previousFocus.focus()
+      if (previousFocus instanceof HTMLElement && previousFocus.isConnected) previousFocus.focus()
     }
   }, [])
 
@@ -26,6 +27,38 @@ export function Dialog({ title, eyebrow, onClose, children, busy = false }: Dial
       ref={dialog}
       aria-labelledby={titleId}
       className="activity-dialog"
+      tabIndex={-1}
+      onKeyDown={(event) => {
+        if (event.key !== 'Tab' || event.defaultPrevented) return
+        const element = event.currentTarget
+        const focusable = [
+          ...element.querySelectorAll<HTMLElement>(
+            'button, input:not([type="hidden"]), select, textarea, a[href], [tabindex]',
+          ),
+        ].filter(
+          (item) => !item.matches(':disabled, [tabindex="-1"]') && item.getClientRects().length > 0,
+        )
+        const first = focusable[0]
+        const last = focusable.at(-1)
+        if (!first) {
+          event.preventDefault()
+          element.focus()
+          return
+        }
+        if (
+          event.shiftKey &&
+          (document.activeElement === first || document.activeElement === element)
+        ) {
+          event.preventDefault()
+          last?.focus()
+        } else if (
+          !event.shiftKey &&
+          (document.activeElement === last || document.activeElement === element)
+        ) {
+          event.preventDefault()
+          first.focus()
+        }
+      }}
       onCancel={(event) => {
         event.preventDefault()
         if (!busy) onClose()

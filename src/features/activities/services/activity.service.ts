@@ -10,6 +10,7 @@ import {
   query,
   where,
   orderBy,
+  limit,
   type Query,
   type QuerySnapshot,
 } from 'firebase/firestore'
@@ -24,6 +25,7 @@ import { sortActivities } from '../utils/activitySummary.ts'
 import { isDateKey } from '../../../utils/date.ts'
 import { assertActivityCanSave } from '../domain/activityTime.ts'
 import { activityInputSchema } from '../validation/activity.schema.ts'
+import { RECENT_ACTIVITY_LIMIT } from '../domain/productivity.ts'
 
 // One focused server read per save also covers date moves and conflicts introduced after opening.
 async function getActivitiesForValidation(uid: string, dateKey: string) {
@@ -79,6 +81,12 @@ function requireOnline() {
   if (typeof navigator !== 'undefined' && navigator.onLine === false) throw { code: 'app/offline' }
 }
 export const activityService: ActivityService = {
+  async getRecentActivities(uid) {
+    const snapshot = await getDocs(
+      query(activitiesCollection(uid), orderBy('startAt', 'desc'), limit(RECENT_ACTIVITY_LIMIT)),
+    )
+    return snapshot.docs.map((item) => mapActivityDocument(item.id, item.data()))
+  },
   async createActivity(uid, input) {
     requireOnline()
     const data = activityInputSchema.parse(input)

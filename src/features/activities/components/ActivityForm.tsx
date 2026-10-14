@@ -18,6 +18,9 @@ import { formatDuration } from '../../../utils/duration'
 import { useUserPreferences } from '../../settings/hooks/useUserPreferences'
 import { getActivityTypeOptions } from '../../settings/utils/activityTypeOptions'
 import { formatTime } from '../../settings/utils/timeFormat'
+import { RecentTaskInput } from './RecentTaskInput'
+import { isSaveShortcut } from '../../productivity/utils/keyboard'
+import { ShortcutHint } from '../../productivity/components/ShortcutHint'
 
 interface ActivityFormProps {
   mode: 'create' | 'edit'
@@ -63,6 +66,7 @@ export function ActivityForm({
   const endEdited = useRef(preserveEndOnStartChange)
   const [date, start, end] = useWatch({ control, name: ['date', 'start', 'end'] })
   const type = useWatch({ control, name: 'type' })
+  const name = useWatch({ control, name: 'name' })
   const typeAvailable = options.some((option) => option.type === type)
   const range = parseTimeRange(date, start, end)
   const conflict = range.valid
@@ -75,8 +79,21 @@ export function ActivityForm({
   const conflictId = useId()
   const startField = register('start')
   const endField = register('end')
+  const submitForm = handleSubmit(async (values) => {
+    if (busy || conflict || !typeAvailable) return
+    await onSubmit(values)
+  })
   return (
-    <form onSubmit={handleSubmit(onSubmit)} noValidate>
+    <form
+      onSubmit={submitForm}
+      onKeyDown={(event) => {
+        if (!isSaveShortcut(event.nativeEvent)) return
+        event.preventDefault()
+        event.stopPropagation()
+        if (!busy) void submitForm()
+      }}
+      noValidate
+    >
       <fieldset disabled={busy} style={{ border: 0, padding: 0, margin: 0, minWidth: 0 }}>
         <p className="required-note">
           Fields marked <span aria-hidden="true">*</span> are required.
@@ -101,13 +118,30 @@ export function ActivityForm({
             </option>
           ))}
         </Select>
-        <Input
-          label="Task / activity name"
-          placeholder="What are you working on?"
-          autoComplete="off"
-          required
+        <div className="quick-types" role="group" aria-label="Quick types">
+          {(['jira_task', 'development', 'scrum_call', 'meeting', 'break'] as const)
+            .filter((item) => preferences.enabledActivityTypes.includes(item))
+            .map((item) => (
+              <Button
+                key={item}
+                variant="ghost"
+                aria-pressed={type === item}
+                onClick={() => setValue('type', item, { shouldDirty: true, shouldValidate: true })}
+              >
+                {activityMeta[item].label}
+              </Button>
+            ))}
+        </div>
+        <RecentTaskInput
+          field={register('name')}
+          value={name}
           error={errors.name?.message}
-          {...register('name')}
+          enabled={mode === 'create'}
+          onChoose={(suggestion) => {
+            setValue('name', suggestion.taskName, { shouldDirty: true, shouldValidate: true })
+            if (preferences.enabledActivityTypes.includes(suggestion.activityType))
+              setValue('type', suggestion.activityType, { shouldDirty: true, shouldValidate: true })
+          }}
         />
         <Select label="Task status" required error={errors.status?.message} {...register('status')}>
           {activityStatuses.map((status) => (
@@ -145,6 +179,25 @@ export function ActivityForm({
             aria-invalid={Boolean(errors.end || conflict)}
             aria-describedby={conflict ? conflictId : undefined}
           />
+        </div>
+        <div className="duration-actions" role="group" aria-label="Quick duration">
+          {[15, 30, 60, 120].map((minutes) => (
+            <Button
+              key={minutes}
+              variant="ghost"
+              disabled={!suggestEndTime(start, minutes)}
+              aria-pressed={range.valid && range.durationMinutes === minutes}
+              onClick={() => {
+                endEdited.current = true
+                setValue('end', suggestEndTime(start, minutes), {
+                  shouldValidate: true,
+                  shouldDirty: true,
+                })
+              }}
+            >
+              +{formatDuration(minutes)}
+            </Button>
+          ))}
         </div>
         <p
           className={`duration-preview ${range.valid ? '' : 'invalid'}`}
@@ -195,6 +248,7 @@ export function ActivityForm({
               : mode === 'edit'
                 ? 'Update activity'
                 : 'Save activity'}
+            <ShortcutHint>Ctrl/⌘ ↵</ShortcutHint>
           </Button>
         </div>
       </fieldset>

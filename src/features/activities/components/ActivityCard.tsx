@@ -1,4 +1,4 @@
-import { Pencil, Trash2 } from 'lucide-react'
+import { Pencil } from 'lucide-react'
 import { Button } from '../../../components/ui/Button'
 import { StatusBadge } from './StatusBadge'
 import { ActivityTypeBadge, ActivityTypeIcon } from './ActivityTypeIcon'
@@ -7,13 +7,15 @@ import type { Activity } from '../types/activity'
 import { formatDuration } from '../../../utils/duration'
 import { formatTime } from '../../settings/utils/timeFormat'
 import { useUserPreferences } from '../../settings/hooks/useUserPreferences'
+import { ActivityActionsMenu } from './ActivityActionsMenu'
 
 export interface ActivityCardProps {
   activity: Activity
   onEdit: (activity: Activity) => void
   onDelete: (activity: Activity) => void
+  onDuplicate: (activity: Activity) => void
 }
-export function ActivityCard({ activity, onEdit, onDelete }: ActivityCardProps) {
+export function ActivityCard({ activity, onEdit, onDelete, onDuplicate }: ActivityCardProps) {
   const {
     preferences: { timeFormat },
   } = useUserPreferences()
@@ -26,7 +28,7 @@ export function ActivityCard({ activity, onEdit, onDelete }: ActivityCardProps) 
           <ActivityTypeBadge type={activity.activityType} />
           <StatusBadge status={activity.status} />
         </div>
-        <p>{activity.taskName}</p>
+        <p title={activity.taskName}>{activity.taskName}</p>
         <div className="activity-time">
           <span>
             {formatTime(activity.startAt, timeFormat)} <span className="time-dash">—</span>{' '}
@@ -44,14 +46,7 @@ export function ActivityCard({ activity, onEdit, onDelete }: ActivityCardProps) 
         >
           <Pencil size={14} />
         </Button>
-        <Button
-          variant="ghost"
-          className="icon-button danger-hover"
-          aria-label={`Delete ${meta.label}`}
-          onClick={() => onDelete(activity)}
-        >
-          <Trash2 size={14} />
-        </Button>
+        <ActivityActionsMenu activity={activity} onDuplicate={onDuplicate} onDelete={onDelete} />
       </div>
     </div>
   )

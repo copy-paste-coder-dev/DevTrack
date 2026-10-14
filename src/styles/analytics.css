@@ -1,0 +1,155 @@
+.day-state {
+  display: inline-flex;
+  margin-top: 14px;
+  padding: 4px 8px;
+  border: 1px solid var(--color-border);
+  border-radius: 6px;
+  font-size: 10px;
+  color: var(--color-text-secondary);
+}
+.day-state.state-target_met,
+.day-state.state-over_target,
+.overtime-note {
+  color: var(--color-success);
+}
+.day-status-counts {
+  font-size: 10px;
+  color: var(--color-text-secondary);
+}
+.workday-progress > p {
+  display: flex;
+  justify-content: space-between;
+  gap: 8px;
+  margin-top: 10px;
+  font-size: 11px;
+}
+.workday-progress > .field-hint {
+  display: block;
+  font-size: 10px;
+  line-height: 1.6;
+}
+.target-reached .progress-track > span {
+  background: var(--color-success);
+}
+.calendar-day.state-future:not(.selected) {
+  color: var(--color-text-muted);
+}
+.calendar-day.is-today:not(.selected) {
+  border-color: var(--color-primary);
+}
+.calendar-dots {
+  align-items: center;
+  gap: 3px;
+  height: 8px;
+  line-height: 8px;
+  font-size: 9px;
+}
+.calendar-dots i {
+  width: 4px;
+  height: 4px;
+}
+.state-target_met .calendar-dots,
+.state-over_target .calendar-dots {
+  color: var(--color-success);
+}
+.state-target_met .calendar-dots i,
+.state-over_target .calendar-dots i {
+  background: var(--color-success);
+}
+.state-over_target .calendar-dots i {
+  border-radius: 0;
+}
+.selected .calendar-dots {
+  color: inherit;
+}
+.calendar-legend {
+  flex-wrap: wrap;
+  justify-content: flex-start;
+  gap: 8px 14px;
+}
+.calendar-legend > span:last-child {
+  display: inline;
+}
+.calendar-tabs button:disabled {
+  opacity: 0.5;
+  cursor: default;
+}
+.month-summary {
+  padding: 18px 22px;
+  margin-bottom: 24px;
+}
+.month-summary dl {
+  display: grid;
+  grid-template-columns: repeat(4, minmax(0, 1fr));
+  gap: 18px;
+  margin: 0;
+}
+.month-summary dt {
+  font-size: 11px;
+  color: var(--color-text-secondary);
+}
+.month-summary dd {
+  margin: 7px 0 0;
+  font-size: 22px;
+  font-weight: 600;
+  font-variant-numeric: tabular-nums;
+}
+.month-summary p {
+  margin: 14px 0 0;
+  font-size: 10px;
+  color: var(--color-text-muted);
+}
+.selected-day-detail {
+  min-width: 0;
+}
+.selected-day-detail .selected-day-header {
+  padding: 0 0 16px;
+}
+.selected-day-card {
+  grid-column: 1 / -1;
+}
+.calendar-page-grid.day-view {
+  grid-template-columns: minmax(260px, 0.7fr) minmax(0, 1.6fr);
+}
+.day-view .selected-day-card {
+  grid-column: auto;
+}
+@media (max-width: 1000px) {
+  .calendar-page-grid.day-view {
+    grid-template-columns: 1fr;
+  }
+  .selected-day-detail .day-summary dl {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+    gap: 16px 28px;
+  }
+}
+@media (max-width: 700px) {
+  .month-summary {
+    padding: 18px;
+  }
+  .month-summary dl {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+  }
+  .month-summary dd {
+    font-size: 20px;
+  }
+  .expanded .day-total {
+    display: none;
+  }
+  .expanded .calendar-day {
+    min-height: 48px;
+  }
+  .expanded .calendar-dots {
+    bottom: 7px;
+  }
+  .selected-day-detail .day-summary dl {
+    grid-template-columns: 1fr;
+  }
+  .calendar-heading .button {
+    min-height: 40px;
+    min-width: 32px;
+  }
+  .calendar-legend {
+    font-size: 9px;
+  }
+}

@@ -158,14 +158,33 @@ test('guests and another user cannot read, list, create, update or delete owner 
 test('activity validation rejects invalid fields and forged audit timestamps', async (t) => {
   const invalid = [
     ['empty task', { taskName: '' }],
+    ['whitespace task', { taskName: '  \t  ' }],
     ['long task', { taskName: 'x'.repeat(161) }],
     ['long notes', { notes: 'x'.repeat(1001) }],
     ['unknown type', { activityType: 'unknown' }],
     ['unknown status', { status: 'unknown' }],
     ['invalid date shape', { dateKey: '12/10/2026' }],
+    ['invalid month', { dateKey: '2026-13-12' }],
+    ['invalid day', { dateKey: '2026-10-00' }],
     ['inverted time', { endAt: Timestamp.fromMillis(0) }],
     ['non-timestamp start', { startAt: '09:00' }],
     ['zero duration', { durationMinutes: 0 }],
+    ['duration differs from timestamps', { durationMinutes: 61 }],
+    [
+      'seconds precision',
+      {
+        startAt: Timestamp.fromDate(new Date('2026-10-12T09:00:01Z')),
+        endAt: Timestamp.fromDate(new Date('2026-10-12T10:00:01Z')),
+      },
+    ],
+    [
+      'sub-second precision',
+      {
+        // Firestore truncates sub-microsecond values, so use a persisted millisecond.
+        startAt: new Timestamp(1791795600, 1000000),
+        endAt: new Timestamp(1791799200, 1000000),
+      },
+    ],
     ['fractional duration', { durationMinutes: 1.5 }],
     ['excessive duration', { durationMinutes: 1501 }],
     ['extra field', { uid: ownerId }],

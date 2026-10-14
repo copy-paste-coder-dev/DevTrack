@@ -7,7 +7,13 @@ export function AppProviders({ children }: PropsWithChildren) {
   return (
     <ErrorBoundary>
       <AuthProvider>{children}</AuthProvider>
-      <Toaster theme="dark" position="bottom-right" richColors closeButton />
+      <Toaster
+        theme="dark"
+        position="bottom-right"
+        mobileOffset={{ bottom: 'calc(84px + env(safe-area-inset-bottom))', left: 16, right: 16 }}
+        richColors
+        closeButton
+      />
     </ErrorBoundary>
   )
 }

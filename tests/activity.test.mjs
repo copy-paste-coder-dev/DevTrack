@@ -9,7 +9,7 @@ import {
   mapActivityToUpdatePayload,
 } from '../src/features/activities/utils/activity.mapper.ts'
 import {
-  getDaySummary,
+  sumDurationMinutes,
   countActivitiesByStatus,
   getEarliestStart,
   getLatestEnd,
@@ -77,6 +77,22 @@ test('document mapper uses ID and Date domain fields, tolerates pending audit fi
     }),
   )
   assert.throws(() => mapActivityDocument('bad', { ...payload, startAt: '09:00' }))
+  assert.throws(() =>
+    mapActivityDocument('wrong-day', {
+      ...payload,
+      dateKey: '2026-10-13',
+      createdAt: null,
+      updatedAt: null,
+    }),
+  )
+  assert.throws(() =>
+    mapActivityDocument('blank-task', {
+      ...payload,
+      taskName: '   ',
+      createdAt: null,
+      updatedAt: null,
+    }),
+  )
 })
 test('static schemas validate same-day ranges; external-data overlap checks belong to the domain/service', () => {
   for (const change of [
@@ -114,9 +130,7 @@ test('real summaries handle unsorted overlapping activity blocks, breaks and emp
     endAt: combineDateAndTime(input.dateKey, '10:00'),
     durationMinutes: 30,
   }
-  assert.equal(getDaySummary([second, first]).loggedMinutes, 120)
-  assert.equal(getDaySummary([second, first]).workMinutes, 90)
-  assert.equal(getDaySummary([second, first]).breakMinutes, 30)
+  assert.equal(sumDurationMinutes([second, first]), 120)
   assert.deepEqual(countActivitiesByStatus([first, second]), {
     completed: 1,
     inProgress: 1,
@@ -125,13 +139,7 @@ test('real summaries handle unsorted overlapping activity blocks, breaks and emp
   assert.equal(sortActivities([second, first])[0].id, 'a')
   assert.equal(getEarliestStart([first, second]).getTime(), first.startAt.getTime())
   assert.equal(getLatestEnd([first, second]).getTime(), first.endAt.getTime())
-  assert.deepEqual(getDaySummary([]), {
-    startTime: null,
-    endTime: null,
-    loggedMinutes: 0,
-    breakMinutes: 0,
-    workMinutes: 0,
-  })
+  assert.equal(sumDurationMinutes([]), 0)
 })
 test('activity errors sanitize backend details', () => {
   assert.match(getActivityErrorMessage({ code: 'permission-denied' }), /permission/)

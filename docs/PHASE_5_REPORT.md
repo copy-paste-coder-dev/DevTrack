@@ -1,6 +1,6 @@
 # Phase 5 personal preferences report
 
-October 13, 2026. Implementation, all local checks and settings-rules deployment are delivered. Required live verification remains pending; this is an implementation checkpoint rather than a completed-phase claim. The existing Phase 4 commit is cd8457c.
+October 13, 2026. Implementation, all local checks and settings-rules deployment are delivered. Real Firebase initialization, save, refresh and activity integration are now verified. The final Google re-login check is pending; this is not yet a completed-phase claim. Implementation checkpoint: 82da8d2. The existing Phase 4 commit is cd8457c.
 
 ## 1. Existing settings audit
 
@@ -110,9 +110,16 @@ Eight native tests cover default copies, strict preferences schema, absent-field
 
 ## 23. Manual settings test results
 
-Pending the requested user check at http://127.0.0.1:5173/app/settings: load initial defaults, save 08:30/17:30/12h and Meeting disabled, refresh, confirm empty-day smart start/type filtering and AM/PM display, then logout/login and activity regression. Confirm an existing disabled-type entry remains editable, or create a separate Meeting test before disabling it. Results are required before completing this phase.
+Verified through the production preview at http://127.0.0.1:5173 with the existing real Google account. Computer Use inspected and operated the application UI; read-only Firebase API probes independently corroborated the same account's initial defaults and first custom save.
 
-A final read-only development probe still found no preferences document for the CLI account and five existing activities, so live initialization/persistence has not been established for that account. A stable bounded activity fingerprint is saved in ignored phase5-live-before.json. UI/account-specific results must be distinguished from CLI-account corroboration if a different account is used. Probes perform no data mutations. No claim of live settings-driven activity preservation or audit preservation is made yet; emulator/browser checks verify those behaviors locally.
+- A previously absent preferences document initialized to 09:00/18:00/24h and all nine types. Both audit timestamps were 2026-10-13T14:47:39.569Z.
+- Saved 08:30/17:30/12h with Meeting disabled. Firestore contained the exact six expected fields, preserved createdAt, and advanced updatedAt to 2026-10-13T14:59:49.588Z. The form returned to a clean, disabled Save state.
+- Browser refresh retained both times, 12h and eight enabled types. Empty October 13 Dashboard and Calendar create forms suggested 08:30–09:00. The create selector contained eight types without Meeting; empty-state text showed 8:30 AM.
+- Existing October 15 entries displayed AM/PM. The initial gap was 8:30 AM–9:00 AM; total logged 3h 15m, remaining 5h 45m, target 9h and progress 36%. Add suggested the existing latest end 12:15, ahead of the saved day start.
+- Temporarily disabled Development and saved. Its existing entries remained visible and counted; an edit form retained Development (currently disabled), its original name and times. Closed the edit without saving, then re-enabled Development and saved successfully. Meeting remains disabled. Saving an unchanged disabled type is covered by local tests; no live activity edit/write/delete was needed for this inspection.
+- Logout returned the protected Settings route to Login with a safe return path. Google re-login and post-login preferences/refresh remain pending because authentication dialogs require user control.
+
+The first custom-save API comparison confirmed all five activity documents, including audit fields, were byte-equivalent under canonical JSON hashing to the pre-settings baseline. Ignored artifacts retain the missing/default/saved snapshots and canonical digest. Subsequent UI checks did not submit activity writes. The restored eight-type preference was confirmed by the UI's Settings saved notification; an additional final API read was not authorized and was not executed. Do not confuse these real UI/API results with synthetic test identities.
 
 ## 24. Multi-user isolation test
 
@@ -157,9 +164,10 @@ Stronger calendar/daily intelligence, functional Week/Day views, timezone/overni
 - [x] Owner/schema/audit security verified locally and released to development.
 - [x] Native/emulator/browser tests, lint/build/format checks.
 - [x] Final complete 52-scenario browser regression.
-- [ ] User-confirmed live persistence/integration/session verification.
+- [x] Live initialization, audited save, refresh, Dashboard/Calendar integration and logout.
+- [ ] User-completed Google re-login followed by saved-preference/session verification.
 - [x] Report/progress and implementation checkpoint committed; commit ID is in the handoff.
 
-Remaining completion blocker: real Firebase live initialization/save/refresh/session and settings-integration verification described in section 23. The final completion report/commit follows those results. No implementation feature or local check remains pending. Broader physical-device/second real OAuth-account checks are known validation limits, not falsely claimed results.
+Remaining completion blocker: Google re-login and verification that the saved preferences return and survive refresh, as described in section 23. The final completion report/commit follows that result. No implementation feature or local check remains pending. Broader physical-device/second real OAuth-account checks are known validation limits, not falsely claimed results.
 
 PHASE 5 STATUS: INCOMPLETE

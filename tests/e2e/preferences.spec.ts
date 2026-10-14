@@ -1,4 +1,4 @@
-import { test, expect } from '../support/test'
+import { test, expect, closeActivityDialog } from '../support/test'
 import type { Page } from '@playwright/test'
 
 const saveButton = (page: Page) => page.getByRole('button', { name: 'Save changes', exact: true })
@@ -61,7 +61,7 @@ test('first load initializes once; settings persist, drive smart start/format/ty
   await page.goto('/app/calendar?date=2026-10-14')
   await page.getByRole('button', { name: 'Add activity', exact: true }).click()
   await expect(page.getByLabel(/^Start time/)).toHaveValue('10:00')
-  await page.keyboard.press('Escape')
+  await closeActivityDialog(page)
   await page.goto('/app?date=2026-10-12')
   await expect(page.getByText('Sprint planning with the team', { exact: true })).toBeVisible()
   await page.getByRole('button', { name: 'Edit Meeting', exact: true }).click()
@@ -147,7 +147,7 @@ test('read failure falls back for logging and Retry restores preferences without
   )
   await page.getByRole('button', { name: 'Add activity', exact: true }).click()
   await expect(page.getByLabel(/^Start time/)).toHaveValue('09:00')
-  await page.keyboard.press('Escape')
+  await closeActivityDialog(page)
   await page.getByRole('link', { name: 'Settings', exact: true }).click()
   await expect(page.getByRole('alert')).toContainText('temporarily unavailable')
   await page.evaluate(() => localStorage.removeItem('devtrack-e2e-preferences-options'))
@@ -210,7 +210,7 @@ test('two users receive their own settings and logout removes the single listene
   await page.goto('/app?date=2026-10-14')
   await page.getByRole('button', { name: 'Add activity', exact: true }).click()
   await expect(page.getByLabel(/^Start time/)).toHaveValue('08:30')
-  await page.keyboard.press('Escape')
+  await closeActivityDialog(page)
   await page.getByRole('button', { name: 'Logout', exact: true }).click()
   await expect(page).toHaveURL(/\/login/)
   expect(

@@ -1,4 +1,4 @@
-import { test, expect } from '../support/test'
+import { test, expect, closeActivityDialog } from '../support/test'
 
 let browserIssues: string[] = []
 test.beforeEach(async ({ page }) => {
@@ -38,7 +38,7 @@ test('activity form validates fields, saves and restores focus', async ({ page }
   ).toHaveCount(7)
   await expect(add).toBeFocused()
   await add.click()
-  await page.keyboard.press('Escape')
+  await closeActivityDialog(page)
   await expect(dialog).not.toBeVisible()
   await expect(add).toBeFocused()
 })
@@ -50,7 +50,10 @@ test('editing and deleting update activity data and retain dialog focus', async 
   await expect(page.getByLabel(/^Start time/)).toHaveValue('11:00')
   await page.screenshot({ path: 'artifacts/screenshots/edit-dialog-desktop.png' })
   await page.getByRole('button', { name: 'Update activity' }).click()
-  await page.getByRole('button', { name: 'Delete Development', exact: true }).click()
+  await page
+    .getByRole('button', { name: 'More actions for Build the dashboard interface', exact: true })
+    .click()
+  await page.getByRole('menuitem', { name: 'Delete', exact: true }).click()
   await expect(page.getByRole('heading', { name: 'Delete activity?' })).toBeVisible()
   await page.getByRole('button', { name: 'Delete', exact: true }).click()
   await expect(page.getByText('Activity deleted.')).toBeVisible()
@@ -69,7 +72,7 @@ test('calendar selects empty days, supports keyboard movement and resets its vis
 }) => {
   await page.goto('/app/calendar')
   await page.getByRole('button', { name: 'Wednesday, October 14, 2026', exact: true }).click()
-  await expect(page.getByText('No activities logged for this day.')).toBeVisible()
+  await expect(page.getByText('No activities planned/logged for this day.')).toBeVisible()
   await expect(page).toHaveURL(/date=2026-10-14/)
   const day = page.getByRole('button', { name: 'Wednesday, October 14, 2026', exact: true })
   await day.focus()
@@ -127,12 +130,15 @@ test('mobile dialog stays in viewport and traps keyboard focus', async ({ page }
   expect(box!.x).toBeGreaterThanOrEqual(0)
   expect(box!.x + box!.width).toBeLessThanOrEqual(390)
   expect(box!.height).toBeLessThanOrEqual(844)
-  for (let i = 0; i < 15; i++) {
+  for (let i = 0; i < 36; i++) {
     await page.keyboard.press('Tab')
     expect(await page.evaluate(() => Boolean(document.activeElement?.closest('dialog')))).toBe(true)
   }
   await page.screenshot({ path: 'artifacts/screenshots/add-dialog-mobile.png' })
-  await page.keyboard.press('Escape')
+  await page.getByRole('button', { name: 'Close dialog', exact: true }).focus()
+  await page.keyboard.press('Shift+Tab')
+  await expect(page.getByRole('button', { name: 'Save activity', exact: true })).toBeFocused()
+  await closeActivityDialog(page)
   await expect(dialog).not.toBeVisible()
 })
 
@@ -147,11 +153,11 @@ test('busy, light, empty and long-task fixtures keep timeline and summaries cons
   await expect(page.locator('.stat-card').first()).toContainText('1h 30m')
   await expect(page.locator('.day-summary')).toContainText('1h 30m')
   await page.goto('/app?date=2026-10-14')
-  await expect(page.getByText('No activities logged for this day.')).toBeVisible()
+  await expect(page.getByText('No activities planned/logged for this day.')).toBeVisible()
   await page.getByRole('button', { name: 'Log first activity' }).click()
   await expect(page.getByLabel(/^Date/)).toHaveValue('2026-10-14')
   await expect(page.getByText('Suggested from your configured day start.')).toBeVisible()
-  await page.keyboard.press('Escape')
+  await closeActivityDialog(page)
   await page.setViewportSize({ width: 390, height: 844 })
   await page.goto('/app?date=2026-10-09')
   await expect(page.locator('.timeline-item')).toHaveCount(1)
@@ -207,16 +213,13 @@ test('loading skeletons and retryable error states render on every data screen',
 
 test('calendar tabs support selection, arrow keys and return to month', async ({ page }) => {
   await page.goto('/app/calendar')
-  await page.getByRole('tab', { name: 'Week', exact: true }).click()
-  await expect(page.getByRole('tab', { name: 'Week', exact: true })).toHaveAttribute(
-    'aria-selected',
-    'true',
-  )
-  await expect(page.getByRole('heading', { name: 'Week view is on the roadmap' })).toBeVisible()
+  await expect(page.getByRole('tab', { name: 'Week · Coming soon' })).toBeDisabled()
+  await page.getByRole('tab', { name: 'Month', exact: true }).focus()
   await page.keyboard.press('ArrowRight')
   await expect(page.getByRole('tab', { name: 'Day', exact: true })).toBeFocused()
-  await expect(page.getByRole('heading', { name: 'Day view is on the roadmap' })).toBeVisible()
-  await page.getByRole('button', { name: 'Back to month view' }).click()
+  await expect(page.getByRole('list', { name: 'Daily activities' })).toBeVisible()
+  await expect(page.locator('.month-calendar')).toHaveCount(0)
+  await page.keyboard.press('ArrowLeft')
   await expect(page.getByRole('heading', { name: 'October 2026' })).toBeVisible()
   await page.reload()
   await expect(page.getByRole('heading', { name: 'October 2026' })).toBeVisible()

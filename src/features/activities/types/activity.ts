@@ -39,6 +39,7 @@ export interface CreateActivityInput {
 export type UpdateActivityInput = CreateActivityInput
 
 export interface ActivityService {
+  getRecentActivities: (uid: string) => Promise<Activity[]>
   createActivity: (uid: string, input: CreateActivityInput) => Promise<string>
   updateActivity: (uid: string, id: string, input: UpdateActivityInput) => Promise<void>
   deleteActivity: (uid: string, id: string) => Promise<void>
@@ -57,12 +58,4 @@ export interface ActivityService {
     next: (data: Activity[]) => void,
     error: (cause: unknown) => void,
   ) => () => void
-}
-
-export interface DaySummaryData {
-  startTime: string | null
-  endTime: string | null
-  loggedMinutes: number
-  workMinutes: number
-  breakMinutes: number
 }

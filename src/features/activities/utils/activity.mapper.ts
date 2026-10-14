@@ -9,6 +9,7 @@ import {
 } from '../types/activity.ts'
 import { activityInputSchema } from '../validation/activity.schema.ts'
 import { calculateDurationMinutes } from '../../../utils/duration.ts'
+import { validateTimeRange } from '../domain/activityTime.ts'
 import { isDateKey } from '../../../utils/date.ts'
 import type { ActivityDocument } from '../types/activityDocument.ts'
 
@@ -16,11 +17,11 @@ const timestamp = z.instanceof(Timestamp)
 const documentSchema = z.object({
   dateKey: z.string().refine(isDateKey),
   activityType: z.enum(activityTypes),
-  taskName: z.string().min(1).max(160),
+  taskName: z.string().trim().min(1).max(160),
   status: z.enum(activityStatuses),
   startAt: timestamp,
   endAt: timestamp,
-  durationMinutes: z.number().int().positive(),
+  durationMinutes: z.number().int().positive().lt(1440),
   notes: z.string().max(1000),
   createdAt: timestamp.nullish(),
   updatedAt: timestamp.nullish(),
@@ -32,7 +33,8 @@ export function mapActivityDocument(id: string, raw: unknown): Activity {
     createdAt: parsed.createdAt ?? null,
     updatedAt: parsed.updatedAt ?? null,
   }
-  if (calculateDurationMinutes(data.startAt.toDate(), data.endAt.toDate()) !== data.durationMinutes)
+  const range = validateTimeRange(data.startAt.toDate(), data.endAt.toDate(), data.dateKey)
+  if (!range.valid || range.durationMinutes !== data.durationMinutes)
     throw new Error('The stored activity has invalid times or duration.')
   return {
     ...data,

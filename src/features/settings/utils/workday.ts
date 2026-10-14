@@ -19,5 +19,6 @@ export function calculateRemainingWorkMinutes({
 }
 
 export function calculateWorkdayProgress(loggedMinutes: number, workdayMinutes: number): number {
+  if (workdayMinutes <= 0 || !Number.isFinite(workdayMinutes)) return 0
   return Math.min(100, Math.max(0, (loggedMinutes / workdayMinutes) * 100))
 }

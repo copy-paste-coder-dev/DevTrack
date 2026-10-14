@@ -71,3 +71,41 @@ PHASE 5 STATUS: INCOMPLETE
 3. **Additional validation:** real second-account isolation, physical devices, Edge/other browsers and new-account/mobile OAuth flows. Ownership is already tested through the emulator, live guest requests and remote Rules API contexts; these broader checks are not phase completion blockers.
 
 Phases 0–4 are complete. Phase 5 implementation is committed with live verification pending. No hosting deployment or remote Git push was performed. The production preview is available at 127.0.0.1:5173; existing live activity entries were left intact.
+
+## Phase 6 — calendar intelligence
+
+The earlier entries record historical checkpoints; the Phase 6 request supplies Phases 0–5 as completed context. The existing user-maintained Phase 5 report has been preserved.
+
+Implemented one pure daily analysis and grouped month analysis, consumed by both Dashboard and Calendar through one month listener per route. Metrics include logged/target/remaining/overtime, raw and clamped progress, actual bounds, shared initial/internal gaps, task statuses and local-date day states. Month metrics cover logged time, active days, historical target-met days and average per active day. Calendar uses accessible state markers, a selected-day summary, shared CRUD/gap-fill, synchronized month/day navigation, Today, URL dates and keyboard focus restoration across query loading. Day view is functional; Week explicitly remains Coming soon. Phase 1 placeholder descriptions above are superseded for Day view.
+
+Native tests: 48 passed. Firestore emulator/rules/production-service tests: 41 passed, including real range/preference snapshots updating derived analysis through create/edit/delete/settings changes. Final full Chrome regression: 59 passed in 4.9 minutes with two workers and a clean exit outside the sandbox; an earlier sandboxed run passed its scenarios but hung during Windows server teardown. Lint/build/format/whitespace checks pass. Responsive tests and visual inspection cover mobile, tablet and desktop; no dependencies, activity schema, rules or remote deployment changed. No production user data was modified.
+
+See [the 29-part Phase 6 report](PHASE_6_REPORT.md) for architecture, files, examples, validation and deferred scope. No Phase 6 blockers remain. Week view, midnight idle-tab rollover and historical preference versioning remain documented limitations/deferred work.
+
+PHASE 6 STATUS: COMPLETE
+
+## Phase 7 — developer productivity
+
+Implemented a shared Dashboard/Calendar workflow hook with route-scoped N/T/Alt-arrow/help commands, typing/composition/repeat guards, safe overlays, synchronous date selection and cleaned-up listeners. The existing dialog/form now supports task autofocus, enabled quick-type chips, same-day duration actions, Ctrl/Cmd+Enter validation and a synchronous submission guard. A bounded user-subcollection query reads the latest 30 activity starts for deduplicated, locally filtered recent-task suggestions; failures are nonblocking and account/closed-dialog results are isolated.
+
+Cards share Edit/More actions with keyboard/touch Duplicate/Delete. Duplicate and Repeat last reuse pure defaults and the existing create service: copied task/notes/duration, enabled type fallback, In progress status and fresh selected-day smart times. Nothing writes until Save. Search/status filters affect cards only, reset per date and leave all analytics/defaults based on full data. Gap actions show their duration and reuse exact Phase 4 boundaries. Mobile forms gain sticky actions and bounded chip scrolling; feedback sits above navigation.
+
+Current checks: lint and production build pass; 58 native tests and 42 Firestore emulator/production-service tests pass. The new emulator case verifies newest-first 30-item recents, cross-user denial and unchanged duplicate writes/schema. Final full Chrome regression: 72/72 passed in 6.8 minutes with two workers and a clean exit; formatting and whitespace checks also pass. Explicit modal Tab wrapping passed the expanded mobile focus test. No remaining Phase 7 blockers. Phase 6 workspace changes and the user-maintained Phase 5 report are preserved. No dependency, rule, index, schema or remote deployment changed.
+
+See [the 31-part Phase 7 report](PHASE_7_REPORT.md) for architecture, file inventory, test evidence and deferred release work.
+
+PHASE 7 STATUS: COMPLETE
+
+## Phase 8 — final MVP audit and release candidate
+
+October 14: audited source/config/dependencies/rules/indexes, TypeScript, effects/listeners, authentication, CRUD/time/settings/analytics/productivity, accessibility, responsive layouts, resilience, bundles and deployment safety. Hardened activity date/duration mapping and Firestore duration/minute-precision validation; fixed Firebase value trimming/default-app selection, calendar tab semantics/modified-key handling, menu focus, outside-month contrast and safe-area toast positioning. Removed unused profile reading/type/daily hook/CSS and unreachable Dashboard states; replaced nested timeline gap searches with indexing. No new product feature or persisted field was added. Prior Phase 6/7 work and the user-maintained Phase 5 report are preserved.
+
+Final local evidence: lint, TypeScript/production build, formatting and Git whitespace pass; 58 unit tests, 48 real-SDK Firestore emulator checks, 76 full Chrome scenarios (6.7 minutes), 3 actual production-preview tests and 2 Hosting emulator checks pass. npm audit reports zero vulnerabilities; only the accessibility development checker was added. Responsive coverage includes all seven requested widths, 390–1920px. Accessibility scans and the complete create/gap/duplicate/edit/calendar/delete/refresh/re-login browser workflow pass. Production bundle has no test adapters/public source maps. Hosting regex headers were verified after discovering a Windows glob mismatch; hidden environment paths are denied.
+
+The user then explicitly selected dev-track-46323 for the MVP release. Published the candidate at [dev-track-46323.web.app](https://dev-track-46323.web.app), with development/production aliases to that project and explicit ignored production web settings verified against the registered Firebase app. Hardened rules/indexes are deployed; released rules exactly match source, index is READY, Google is enabled and both Hosting domains are authorized. Hosting version `445a97bd8998d7cd` is FINALIZED. The exact build and hash manifest plus pre-deployment rules/configuration are archived. This is the first Hosting release; no existing user data, Git commit, tag or push was changed/created.
+
+Fresh production preview passes 3/3. Public deployment checks pass 4/4: all published JS/CSS hashes match, five SPA paths/reloads/guest protection/accessibility work at 390/1440px, headers/cache policies match, and ten actual guest Firestore operations are denied. Released-rules simulations pass 48/48 for owner/other UID/guest contexts without executing data writes. Read-only inspection corroborates a post-publication login/profile audit and valid stored preferences/five current-month activities; it does not substitute for signed-in UI tests. Public `/.env` safely serves exactly the SPA, while the emulator returns 404.
+
+All implementation, deployment and automated verification is delivered. The full signed-in workflow on the published origin and live two-account isolation remain unverified: browser connectors expose no session and cannot open either the in-app browser or Chrome. The user has not yet supplied those test results. See the [32-part Phase 8 report](PHASE_8_REPORT.md), [deployment record](RELEASE_0.1.0.md) and [release checklist](RELEASE_CHECKLIST.md) for evidence and the two outstanding acceptance checks.
+
+PHASE 8 STATUS: INCOMPLETE

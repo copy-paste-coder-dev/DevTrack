@@ -9,23 +9,29 @@ import { CalendarLoadingState } from '../../components/feedback/LoadingState'
 import { MonthCalendar } from './components/MonthCalendar'
 import { useSelectedDay } from './hooks/useSelectedDay'
 import { ActivityTimeline } from '../activities/components/ActivityTimeline'
-import { ActivityDialog, type DialogSelection } from '../activities/components/ActivityDialog'
-import { useActivitiesByRange } from '../activities/hooks/useActivitiesByRange'
-import { getActivityDates, sumDurationMinutes } from '../activities/utils/activitySummary'
-import { getMonthDateRange } from '../../utils/date'
-import { formatDuration } from '../../utils/duration'
+import { useMonthAnalysis } from './hooks/useMonthAnalysis'
+import { DaySummary } from '../activities/components/DaySummary'
+import { MonthSummary } from './components/MonthSummary'
 import { useUserPreferences } from '../settings/hooks/useUserPreferences'
+import { useActivityWorkflow } from '../productivity/hooks/useActivityWorkflow'
+import { WorkflowDialogs } from '../productivity/components/WorkflowDialogs'
+import { ShortcutHint } from '../productivity/components/ShortcutHint'
+import { addDays } from 'date-fns'
 
-type CalendarView = 'Month' | 'Week' | 'Day'
+type CalendarView = 'Month' | 'Day'
 export function CalendarPage() {
   const preferences = useUserPreferences()
-  const { selected, dateKey, selectDay } = useSelectedDay()
-  const range = getMonthDateRange(selected)
-  const monthData = useActivitiesByRange(range.startDateKey, range.endDateKey)
+  const { selected, dateKey, selectDay, calendarFocusRequest } = useSelectedDay()
+  const monthData = useMonthAnalysis(selected)
   const { isLoading, error, retry } = monthData
-  const [dialog, setDialog] = useState<DialogSelection | null>(null)
   const [view, setView] = useState<CalendarView>('Month')
-  const activities = monthData.activities.filter((activity) => activity.dateKey === dateKey)
+  const { selectedActivities: activities, selectedAnalysis: analysis } = monthData
+  const workflow = useActivityWorkflow({
+    selected,
+    selectDay,
+    activities,
+    disabled: isLoading || Boolean(error) || preferences.isLoading,
+  })
   return (
     <PageContainer>
       <div className="page-heading">
@@ -38,18 +44,22 @@ export function CalendarPage() {
           <Button variant="secondary" onClick={() => selectDay(new Date())}>
             <CalendarDays size={15} />
             Today
+            <ShortcutHint>T</ShortcutHint>
           </Button>
           <Button
+            data-add-activity
+            aria-keyshortcuts="N"
             disabled={isLoading || Boolean(error) || preferences.isLoading}
-            onClick={() => setDialog({ activity: null })}
+            onClick={workflow.add}
           >
             <Plus size={17} />
             Add activity
+            <ShortcutHint>N</ShortcutHint>
           </Button>
         </div>
       </div>
       <div className="calendar-tabs" role="tablist" aria-label="Calendar view">
-        {(['Month', 'Week', 'Day'] as const).map((label, index, tabs) => (
+        {(['Month', 'Day'] as const).map((label, index, tabs) => (
           <button
             type="button"
             key={label}
@@ -75,66 +85,102 @@ export function CalendarPage() {
             {label}
           </button>
         ))}
+        <button
+          type="button"
+          role="tab"
+          aria-selected={false}
+          tabIndex={-1}
+          disabled
+          title="Week view is coming soon"
+        >
+          Week · Coming soon
+        </button>
       </div>
       <div id="calendar-view-panel" role="tabpanel" aria-labelledby={`tab-${view}`}>
-        {view !== 'Month' ? (
-          <Card className="calendar-view-placeholder">
-            <CalendarDays size={30} />
-            <h2>{view} view is on the roadmap</h2>
-            <p>Explore the month view to select a date and review its activities.</p>
-            <Button variant="secondary" onClick={() => setView('Month')}>
-              Back to month view
-            </Button>
-          </Card>
-        ) : isLoading ? (
+        {isLoading ? (
           <CalendarLoadingState />
         ) : error ? (
           <Card>
             <ErrorState title="Unable to load your calendar." description={error} onRetry={retry} />
           </Card>
         ) : (
-          <div className="calendar-page-grid">
-            <Card className="calendar-main">
-              <MonthCalendar
-                selected={selected}
-                onSelect={selectDay}
-                month={startOfMonth(selected)}
-                onMonthChange={selectDay}
-                activityDates={getActivityDates(monthData.activities)}
-                expanded
-              />
-            </Card>
-            <Card className="selected-day-card">
-              <div className="selected-day-header">
-                <span className="eyebrow">SELECTED DAY</span>
-                <h2>{format(selected, 'EEEE, MMM d')}</h2>
-                <p>
-                  {activities.length} activities <span>·</span>{' '}
-                  {formatDuration(sumDurationMinutes(activities))} logged
-                </p>
+          <>
+            {view === 'Month' && <MonthSummary analysis={monthData.analysis} />}
+            <div className={`calendar-page-grid ${view === 'Day' ? 'day-view' : ''}`}>
+              {view === 'Month' && (
+                <Card className="calendar-main">
+                  <MonthCalendar
+                    selected={selected}
+                    onSelect={selectDay}
+                    month={startOfMonth(selected)}
+                    onMonthChange={selectDay}
+                    dayAnalyses={monthData.analysis.days}
+                    todayKey={monthData.todayKey}
+                    focusRequest={calendarFocusRequest}
+                    expanded
+                  />
+                </Card>
+              )}
+              <div className="selected-day-detail">
+                <div className="selected-day-header">
+                  <span className="eyebrow">SELECTED DAY</span>
+                  <h2>{format(selected, 'EEEE, MMM d, yyyy')}</h2>
+                  <div className="selected-day-navigation">
+                    <Button
+                      variant="ghost"
+                      aria-label="Previous day"
+                      onClick={() => selectDay(addDays(selected, -1))}
+                    >
+                      ← Previous
+                    </Button>
+                    <Button
+                      variant="ghost"
+                      aria-label="Next day"
+                      onClick={() => selectDay(addDays(selected, 1))}
+                    >
+                      Next →
+                    </Button>
+                  </div>
+                </div>
+                <DaySummary analysis={analysis} />
               </div>
-              <ActivityTimeline
-                activities={activities}
-                dateKey={dateKey}
-                onLogGap={(gap) => setDialog({ activity: null, gap })}
-                onAdd={() => setDialog({ activity: null })}
-                onEdit={(activity) => setDialog({ activity })}
-                onDelete={(activity) => setDialog({ activity, action: 'delete' })}
-                compact
-              />
-            </Card>
-          </div>
+              <Card className="selected-day-card">
+                <div className="selected-day-header">
+                  <h2>
+                    Your timeline <span className="count-badge">{activities.length}</span>
+                  </h2>
+                </div>
+                <div className="timeline-tools">
+                  {workflow.canRepeat && (
+                    <Button variant="secondary" onClick={workflow.repeatLast}>
+                      Repeat last
+                    </Button>
+                  )}
+                  <Button
+                    variant="ghost"
+                    onClick={workflow.showHelp}
+                    aria-label="Keyboard shortcuts"
+                  >
+                    Shortcuts <ShortcutHint>?</ShortcutHint>
+                  </Button>
+                </div>
+                <ActivityTimeline
+                  key={dateKey}
+                  activities={activities}
+                  dateKey={dateKey}
+                  analysis={analysis}
+                  onLogGap={workflow.logGap}
+                  onAdd={workflow.add}
+                  onEdit={workflow.edit}
+                  onDelete={workflow.remove}
+                  onDuplicate={workflow.duplicate}
+                />
+              </Card>
+            </div>
+          </>
         )}
       </div>
-      {dialog && (
-        <ActivityDialog
-          key={dialog.activity?.id ?? 'create'}
-          {...dialog}
-          dateKey={dateKey}
-          activities={activities}
-          onClose={() => setDialog(null)}
-        />
-      )}
+      <WorkflowDialogs workflow={workflow} dateKey={dateKey} activities={activities} />
     </PageContainer>
   )
 }
