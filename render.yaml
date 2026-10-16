@@ -1,0 +1,25 @@
+services:
+  - type: web
+    name: devtrack-eod-ai
+    runtime: node
+    plan: free
+    rootDir: functions
+    buildCommand: npm ci --include=dev && npm run build
+    startCommand: npm start
+    healthCheckPath: /health
+    autoDeployTrigger: off
+    envVars:
+      - key: NODE_ENV
+        value: production
+      - key: FIREBASE_PROJECT_ID
+        value: dev-track-46323
+      - key: ALLOWED_ORIGINS
+        value: https://dev-track-46323.web.app,https://dev-track-46323.firebaseapp.com
+      - key: EOD_AI_PROVIDERS
+        value: groq,gemini
+      - key: GROQ_MODEL
+        value: openai/gpt-oss-20b
+      - key: GEMINI_MODEL
+        value: gemini-3.5-flash-lite
+      - key: EOD_AI_KEYS
+        sync: false

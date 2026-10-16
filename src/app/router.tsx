@@ -48,6 +48,12 @@ export const router = createBrowserRouter([
             }),
           },
           {
+            path: 'eod',
+            lazy: async () => ({
+              Component: (await import('../features/eod/EodSummaryPage')).EodSummaryPage,
+            }),
+          },
+          {
             path: 'settings',
             lazy: async () => ({
               Component: (await import('../features/settings/SettingsPage')).SettingsPage,

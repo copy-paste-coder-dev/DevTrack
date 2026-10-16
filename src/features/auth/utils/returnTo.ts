@@ -1,4 +1,4 @@
-const allowedPaths = new Set(['/app', '/app/calendar', '/app/settings'])
+const allowedPaths = new Set(['/app', '/app/calendar', '/app/eod', '/app/settings'])
 
 export function validateReturnTo(value: string | null | undefined): string {
   if (

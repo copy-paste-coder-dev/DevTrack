@@ -5,11 +5,11 @@ import reactHooks from 'eslint-plugin-react-hooks'
 import reactRefresh from 'eslint-plugin-react-refresh'
 
 export default tseslint.config(
-  { ignores: ['dist', 'artifacts'] },
+  { ignores: ['dist', 'artifacts', 'functions/lib', 'functions/node_modules'] },
   js.configs.recommended,
   ...tseslint.configs.recommended,
   {
-    files: ['tests/**/*.mjs', 'playwright*.config.ts'],
+    files: ['tests/**/*.mjs', 'functions/**/*.{ts,mjs}', 'playwright*.config.ts'],
     languageOptions: { globals: globals.node },
   },
   {

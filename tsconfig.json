@@ -5,6 +5,7 @@
     "module": "ESNext",
     "moduleResolution": "Bundler",
     "paths": {
+      "#eod-ai-service": ["./src/features/eod/services/eodAi.service.ts"],
       "#settings-service": ["./src/features/settings/services/settings.service.ts"],
       "#auth-service": ["./src/features/auth/services/auth.service.ts"],
       "#activity-service": ["./src/features/activities/services/activity.service.ts"]

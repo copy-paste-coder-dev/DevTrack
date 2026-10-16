@@ -1,5 +1,61 @@
 # DevTrack
 
+## EOD Summary
+
+Open **EOD Summary** in the workspace navigation (`/app/eod?date=YYYY-MM-DD`). Choose a day with the date picker, Previous/Next day, or Today. The protected page provides logged/target/remaining or overtime, session and work item counts, workday progress and actual times, final-status sections, activity-type totals, and unlogged gaps. Future dates show a separate Planned Activities section. Empty days, loading, read failures and preference failures have explicit states.
+
+The summary is derived in memory. It adds no Firestore summary documents or writes and uses one selected-day listener. `analyzeDay` is the canonical source for totals, targets, progress, bounds and gaps. EOD's pure domain layer adds grouping, session detail and type breakdowns. It follows the existing valid-interval policy and duration helper: valid persisted minute durations remain authoritative; malformed durations fall back to validated timestamps. Invalid intervals are excluded with a visible count.
+
+Repeated sessions group by **activity type + trimmed, whitespace-collapsed, case-insensitive task name**. Jira IDs, punctuation and technical words remain intact. The earliest session supplies the original display name. Sessions and groups are chronological; equal start times use activity ID order. The latest session by start time determines the group's final status. All session durations and notes remain available, including historical activity types disabled in Settings.
+
+- **Visual** shows each work item once, with total duration, final status and expandable sessions. Up to three sessions start expanded; long notes can be expanded separately.
+- **Compact Text** provides a concise grouped update for Teams/Slack.
+- **Detailed Text** adds configured/actual times, individual sessions and statuses, notes, type totals and gap ranges. Clock times honor 12h/24h preferences; multiline task names and notes are flattened for readable plain text.
+- **Copy for Teams / Slack** copies the selected text format. Visual copies Compact Text. AI Enhanced has its own Copy Summary button. Copy success/failure uses toasts, and a selection fallback supports older clipboard implementations.
+
+### Optional AI enhancement
+
+The standard summary works without AI deployment, provider keys or network access to an AI provider. The AI tab discovers providers through authenticated GET /providers on the HTTP backend. Generate sends POST /summary, which delegates to EodAiProvider, implemented by GroqEodProvider and GeminiEodProvider. The backend verifies the current Firebase ID token. Models are server configuration, not browser code.
+
+AI only selects approved, status-appropriate wording for each already-grouped task. The server rejects missing tasks, altered indices, unexpected fields or wording outside the allowlist, then renders task titles/IDs, statuses, durations, counts and gap totals from the deterministic input. This deliberately limits rewriting: titles stay verbatim and the model cannot add accomplishments or blockers. Both adapters request JSON, validate the response independently and use a 20-second deadline. Failures show the standard summary with a friendly message; raw provider errors are not exposed.
+
+**Privacy:** Generation is user initiated. Only date, grouped task names/types/final statuses, formatted durations, session counts and aggregate gaps are sent to the selected external provider. Session notes, document IDs, audit metadata and account/profile data are omitted. Firebase authentication travels only to the backend, never in provider payloads. Generated results are kept in component memory and are invalidated when the selected summary changes; they are not saved to Firestore. Task names may themselves contain sensitive content: review them before generating.
+
+### Render AI configuration
+
+The Render Free backend is implemented under functions/, with Node.js 22 and a checked-in render.yaml. Firebase Hosting/Auth/Firestore stay on Spark. Both provider keys/models were previously verified locally: Groq openai/gpt-oss-20b and Gemini gemini-3.5-flash-lite. Keys remain in ignored functions/.secret.local; production needs the EOD_AI_KEYS secret environment value on Render. No AI backend deployment or production activation has been recorded yet.
+
+Follow [the Render deployment guide](docs/RENDER_EOD_SETUP.md) to connect the repository, create the Free service, configure secrets, verify health/authentication and set the public VITE_EOD_AI_BASE_URL before rebuilding and publishing Firebase Hosting. The [AI setup record](docs/EOD_AI_SETUP.md) preserves provider validation and deployment state.
+
+For local HTTP development, copy functions/.env.example to ignored functions/.env.local, keep keys in .secret.local, then run:
+
+```powershell
+npm.cmd ci --prefix functions
+npm.cmd --prefix functions run build
+npm.cmd --prefix functions run start:local
+```
+
+Set root .env.development.local to include VITE_EOD_AI_BASE_URL=http://127.0.0.1:10000, then restart Vite. Local requests still require a real Firebase sign-in for dev-track-46323. An empty backend URL disables enhancement while the standard summary remains usable.
+
+Authentication is required for discovery and generation. The HTTP server enforces exact-origin CORS, a 96,000-byte body cap, two concurrent generations and a bounded 30-second per-user cooldown. Existing domain validation limits input to 24,000 characters, 100 groups and 500 sessions. These in-memory limits reset on restart and are not a durable global quota. Raw provider errors are never returned; Firestore rules are unchanged. Render Free can sleep, so discovery and generation allow 120 seconds for wake-up; provider calls retain a 20-second deadline.
+
+The original Firebase callable exports are retained as an optional backend, but the browser now uses HTTP. They are not deployed by the Render procedure. Firebase Functions deployment would require Blaze and a separate transport decision.
+
+### EOD checks and limitations
+
+```powershell
+npm.cmd test
+npm.cmd run lint
+npm.cmd run build
+npm.cmd --prefix functions run build
+npm.cmd --prefix functions test
+npm.cmd run test:e2e -- tests/e2e/eod.spec.ts --workers=1
+```
+
+Tests cover grouping/normalization/type identity, latest-session status, exact durations and percentages, invalid/empty days, gaps, text exports, overtime, both time formats, AI payload privacy, authenticated dispatch, provider mapping and failure sanitization. Browser scenarios exercise the route, single listener, clipboard and fallback, keyboard tabs, responsive views at 390/430/768/1024/1440/1920 pixels and WCAG checks at mobile/desktop sizes. See `docs/EOD_REPORT.md` for results and the file inventory.
+
+Current limitations: single-day summaries; no Jira metadata integration; manual naming consistency affects grouping; same normalized name within one type merges tasks; overlapping legacy durations follow existing analytics; gaps omit trailing configured workday time; AI enhancement is optional and intentionally constrained to approved wording. Enabling production AI requires Render configuration, secrets, an actual backend URL and a new Hosting build. Automated adapter tests use synthetic mocked responses; earlier live key/model checks are documented separately. Live provider/model availability must be checked during deployment.
+
 A calendar-based developer activity tracker with a dark neon workspace. Google Authentication protects the app; activities and personal preferences use Cloud Firestore.
 
 ## Setup

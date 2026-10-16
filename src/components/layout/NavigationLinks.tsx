@@ -1,4 +1,4 @@
-import { CalendarDays, House, LayoutDashboard, Settings2 } from 'lucide-react'
+import { CalendarDays, FileText, House, LayoutDashboard, Settings2 } from 'lucide-react'
 import { NavLink } from 'react-router-dom'
 
 const navigation = [
@@ -10,6 +10,7 @@ const navigation = [
     icon: CalendarDays,
     end: false,
   },
+  { to: '/app/eod', label: 'EOD Summary', mobileLabel: 'Summary', icon: FileText, end: false },
   { to: '/app/settings', label: 'Settings', mobileLabel: 'Settings', icon: Settings2, end: false },
 ]
 export function NavigationLinks({ mobile = false }: { mobile?: boolean }) {

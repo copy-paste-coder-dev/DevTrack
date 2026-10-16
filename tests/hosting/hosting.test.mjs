@@ -8,7 +8,15 @@ test('Hosting serves the production SPA for every direct entry/reload path with 
   const index = await (await fetch(origin)).text()
   assert.match(index, /<title>DevTrack/)
   assert.doesNotMatch(index, /\/src\/main\.tsx|devtrack-e2e-/)
-  for (const path of ['/', '/login', '/app', '/app/calendar', '/app/settings', '/not-a-route']) {
+  for (const path of [
+    '/',
+    '/login',
+    '/app',
+    '/app/calendar',
+    '/app/eod',
+    '/app/settings',
+    '/not-a-route',
+  ]) {
     const response = await fetch(`${origin}${path}`)
     assert.equal(response.status, 200, path)
     assert.equal(await response.text(), index, path)

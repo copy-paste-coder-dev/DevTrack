@@ -11,7 +11,12 @@ import {
 import { buildProfileWrite } from '../src/features/auth/utils/profileWrite.ts'
 
 test('return destinations allow only known internal app routes', () => {
-  for (const path of ['/app', '/app/calendar?date=2026-10-13', '/app/settings#preferences'])
+  for (const path of [
+    '/app',
+    '/app/calendar?date=2026-10-13',
+    '/app/eod?date=2026-10-12',
+    '/app/settings#preferences',
+  ])
     assert.equal(validateReturnTo(path), path)
   for (const path of [
     null,

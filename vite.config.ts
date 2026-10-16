@@ -16,6 +16,14 @@ export default defineConfig(({ mode, command }) => {
     plugins: [react(), tailwindcss()],
     resolve: {
       alias: {
+        '#eod-ai-service': fileURLToPath(
+          new URL(
+            mode === 'e2e'
+              ? './tests/support/eodAi.service.ts'
+              : './src/features/eod/services/eodAi.service.ts',
+            import.meta.url,
+          ),
+        ),
         '#settings-service': fileURLToPath(
           new URL(
             mode === 'e2e'
